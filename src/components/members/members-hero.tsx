@@ -25,7 +25,7 @@ export default function MembersHero() {
 
                 {/* Subtitle */}
                 <p className="text-white italic font-Roboto font-medium text-[14px] sm:text-[16px] md:text-[18px] leading-relaxed">
-                    Meet the diverse voices representing Pakistan's youth across all provinces and sectors, driving change and innovation nationwide
+                    Meet the diverse voices representing Pakistan&apos;s youth across all provinces and sectors, driving change and innovation nationwide
                 </p>
 
                 {/* Stat Cards */}

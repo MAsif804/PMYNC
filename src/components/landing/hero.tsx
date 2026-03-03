@@ -18,7 +18,7 @@ export default function HeroSection() {
                     National Youth Council OF Pakistan
                 </h1>
                 <p className="mb-8 text-start max-w-full text-[18px] text-white font-Roboto font-medium leading-normal tracking-wide md:text-xl italic">
-                    The Prime Minister’s National Youth Council (NYC), a flagship initiative of the  Prime Minister's Youth Programme, is an officially notified platform from Cabinet Division for young leaders to provide policy input and youth perspectives to concerned policy makers both  at federal and provincial level.
+                    The Prime Minister&apos;s National Youth Council (NYC), a flagship initiative of the  Prime Minister&apos;s Youth Programme, is an officially notified platform from Cabinet Division for young leaders to provide policy input and youth perspectives to concerned policy makers both  at federal and provincial level.
                 </p>
                 <div className="flex flex-col  gap-4 sm:flex-row">
                     <Button variant="green" >

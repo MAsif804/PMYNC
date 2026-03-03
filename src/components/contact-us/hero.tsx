@@ -14,7 +14,7 @@ export default function ContactHero() {
                 </h1>
 
                 <p className="mt-3 max-w-[745px] text-[14px] sm:text-[16px] md:text-[17px] text-white italic font-medium leading-relaxed drop-shadow-sm">
-                    Have a question or want to get involved? We'd love to hear from you. Fill out the form below or reach out through our contact information
+                    Have a question or want to get involved? We&apos;d love to hear from you. Fill out the form below or reach out through our contact information
                 </p>
             </div>
         </section>

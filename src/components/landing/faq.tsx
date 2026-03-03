@@ -55,7 +55,7 @@ export default function FAQ() {
                         Frequently Asked Questions (FAQs)
                     </h2>
                     <p className="text-[#6A7282] text-[18px] mt-4">
-                        Our council is built on the passion and dedication of young people. Here's what they have to say about their journey with us.
+                        Our council is built on the passion and dedication of young people. Here&apos;s what they have to say about their journey with us.
                     </p>
                 </div>
 

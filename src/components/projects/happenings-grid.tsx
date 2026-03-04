@@ -3,6 +3,15 @@
 import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "next/link";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
 
 type Happening = {
     id: number;
@@ -188,6 +197,9 @@ function HappeningCard({ item }: { item: Happening }) {
 export default function HappeningsGrid() {
     const filters = ["All", "News", "Events", "Blog"];
     const [activeFilter, setActiveFilter] = useState("All");
+    const [page, setPage] = useState(1);
+    const itemsPerPage = 6;
+    const totalPages = Math.ceil(happenings.length / itemsPerPage);
 
     return (
         <section className="py-20 bg-white">
@@ -228,22 +240,64 @@ export default function HappeningsGrid() {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex justify-center items-center gap-1.5 md:gap-3 mt-4">
-                    <button className="text-[#A1A1AA] text-[14px] md:text-[15px] flex items-center gap-1.5 mr-2 md:mr-4 hover:text-[#18181B] transition-colors disabled:opacity-50" disabled>
-                        <span className="text-[18px] leading-none mb-[2px]">&larr;</span> Previous
-                    </button>
-
-                    <button className="text-[#088E48] font-bold text-[15px] w-8 h-8 flex items-center justify-center">1</button>
-                    <button className="text-[#52525B] hover:text-[#088E48] font-medium text-[15px] w-8 h-8 flex items-center justify-center transition-colors">2</button>
-                    <button className="text-[#52525B] hover:text-[#088E48] font-medium text-[15px] w-8 h-8 flex items-center justify-center transition-colors">3</button>
-                    <button className="text-[#52525B] hover:text-[#088E48] font-medium text-[15px] w-8 h-8 hidden sm:flex items-center justify-center transition-colors">4</button>
-                    <span className="text-[#52525B] text-[15px] mx-1">...</span>
-                    <button className="text-[#52525B] hover:text-[#088E48] font-medium text-[15px] w-8 h-8 flex items-center justify-center transition-colors">12</button>
-
-                    <button className="text-[#088E48] text-[14px] md:text-[15px] font-medium flex items-center gap-1.5 ml-2 md:ml-4 hover:text-[#0aa855] transition-colors">
-                        Next <span className="text-[18px] leading-none mb-[2px]">&rarr;</span>
-                    </button>
-                </div>
+                {totalPages > 1 && (() => {
+                    const visibleEnd = Math.min(4, totalPages - 1);
+                    const showEllipsis = totalPages > visibleEnd + 1;
+                    const visiblePages = Array.from({ length: visibleEnd }, (_, i) => i + 1);
+                    return (
+                        <div className="mt-4">
+                            <Pagination>
+                                <PaginationContent className="gap-0">
+                                    <PaginationItem>
+                                        <PaginationPrevious
+                                            href="#"
+                                            onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(1, p - 1)); }}
+                                            className={`gap-1 text-[15px] font-normal border-none bg-transparent shadow-none
+                                                ${page === 1 ? "pointer-events-none text-gray-300" : "text-gray-600 hover:text-gray-900 hover:bg-transparent cursor-pointer"}`}
+                                        />
+                                    </PaginationItem>
+                                    {visiblePages.map((n) => (
+                                        <PaginationItem key={n}>
+                                            <PaginationLink
+                                                href="#"
+                                                onClick={(e) => { e.preventDefault(); setPage(n); }}
+                                                className={`w-9 h-9 border-none bg-transparent shadow-none text-[15px] transition-colors cursor-pointer
+                                                    ${page === n ? "font-bold text-[#088E48] hover:bg-transparent hover:text-[#088E48]" : "font-normal text-gray-600 hover:bg-transparent hover:text-gray-900"}`}
+                                            >
+                                                {n}
+                                            </PaginationLink>
+                                        </PaginationItem>
+                                    ))}
+                                    {showEllipsis && (
+                                        <PaginationItem>
+                                            <PaginationEllipsis className="text-gray-400" />
+                                        </PaginationItem>
+                                    )}
+                                    {totalPages > visibleEnd && (
+                                        <PaginationItem>
+                                            <PaginationLink
+                                                href="#"
+                                                onClick={(e) => { e.preventDefault(); setPage(totalPages); }}
+                                                className={`w-9 h-9 border-none bg-transparent shadow-none text-[15px] transition-colors cursor-pointer
+                                                    ${page === totalPages ? "font-bold text-[#088E48] hover:bg-transparent hover:text-[#088E48]" : "font-normal text-gray-600 hover:bg-transparent hover:text-gray-900"}`}
+                                            >
+                                                {totalPages}
+                                            </PaginationLink>
+                                        </PaginationItem>
+                                    )}
+                                    <PaginationItem>
+                                        <PaginationNext
+                                            href="#"
+                                            onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(totalPages, p + 1)); }}
+                                            className={`gap-1 text-[15px] font-semibold border-none bg-transparent shadow-none
+                                                ${page === totalPages ? "pointer-events-none text-gray-300" : "text-[#088E48] hover:text-[#06763c] hover:bg-transparent cursor-pointer"}`}
+                                        />
+                                    </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
+                        </div>
+                    );
+                })()}
             </div>
         </section>
     );

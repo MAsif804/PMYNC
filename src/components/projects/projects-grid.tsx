@@ -1,8 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { CalendarClock, UsersRound } from "lucide-react";
 import { projects } from "@/data/projects";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const dots = [
     { top: "12%", left: "22%" },
@@ -15,7 +25,13 @@ const dots = [
     { top: "88%", left: "52%" },
 ];
 
+const ITEMS_PER_PAGE = 6;
+
 export default function ProjectsGrid() {
+    const [page, setPage] = useState(1);
+    const totalPages = Math.ceil(projects.length / ITEMS_PER_PAGE);
+    const currentProjects = projects.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+
     return (
         <section
             className="relative py-24 overflow-hidden"
@@ -56,8 +72,7 @@ export default function ProjectsGrid() {
 
                 {/* 3x2 Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-14">
-                    {/* Map through a slice of projects or duplicate to get 6 for UI demonstration */}
-                    {[...projects, ...projects].slice(0, 6).map((project, idx) => {
+                    {currentProjects.map((project, idx) => {
                         const short = project.shortDescription.replace(/\.{3}$/, "");
 
                         return (
@@ -130,22 +145,62 @@ export default function ProjectsGrid() {
             </div>
 
             {/* Pagination */}
-            <div className="flex justify-center items-center gap-1.5 md:gap-3">
-                <button className="text-[#A1A1AA] text-[14px] md:text-[15px] flex items-center gap-1.5 mr-2 md:mr-4 hover:text-white transition-colors disabled:opacity-50" disabled>
-                    <span className="text-[18px] leading-none mb-[2px]">&larr;</span> Previous
-                </button>
-
-                <button className="text-[#088E48] font-bold text-[15px] w-8 h-8 flex items-center justify-center">1</button>
-                <button className="text-white hover:text-[#088E48] font-medium text-[15px] w-8 h-8 flex items-center justify-center transition-colors">2</button>
-                <button className="text-white hover:text-[#088E48] font-medium text-[15px] w-8 h-8 flex items-center justify-center transition-colors">3</button>
-                <button className="text-white hover:text-[#088E48] font-medium text-[15px] w-8 h-8 hidden sm:flex items-center justify-center transition-colors">4</button>
-                <span className="text-white text-[15px] mx-1">...</span>
-                <button className="text-white hover:text-[#088E48] font-medium text-[15px] w-8 h-8 flex items-center justify-center transition-colors">12</button>
-
-                <button className="text-[#088E48] text-[14px] md:text-[15px] font-medium flex items-center gap-1.5 ml-2 md:ml-4 hover:text-[#0aa855] transition-colors">
-                    Next <span className="text-[18px] leading-none mb-[2px]">&rarr;</span>
-                </button>
-            </div>
-        </section >
+            {totalPages > 1 && (() => {
+                const visibleEnd = Math.min(4, totalPages - 1);
+                const showEllipsis = totalPages > visibleEnd + 1;
+                const visiblePages = Array.from({ length: visibleEnd }, (_, i) => i + 1);
+                return (
+                    <Pagination>
+                        <PaginationContent className="gap-0">
+                            <PaginationItem>
+                                <PaginationPrevious
+                                    href="#"
+                                    onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(1, p - 1)); }}
+                                    className={`gap-1 text-[15px] font-normal border-none bg-transparent shadow-none
+                                        ${page === 1 ? "pointer-events-none text-gray-400" : "text-white/70 hover:text-white hover:bg-transparent cursor-pointer"}`}
+                                />
+                            </PaginationItem>
+                            {visiblePages.map((n) => (
+                                <PaginationItem key={n}>
+                                    <PaginationLink
+                                        href="#"
+                                        onClick={(e) => { e.preventDefault(); setPage(n); }}
+                                        className={`w-9 h-9 border-none bg-transparent shadow-none text-[15px] transition-colors cursor-pointer
+                                            ${page === n ? "font-bold text-[#088E48] hover:bg-transparent hover:text-[#088E48]" : "font-normal text-white/70 hover:bg-transparent hover:text-white"}`}
+                                    >
+                                        {n}
+                                    </PaginationLink>
+                                </PaginationItem>
+                            ))}
+                            {showEllipsis && (
+                                <PaginationItem>
+                                    <PaginationEllipsis className="text-white/50" />
+                                </PaginationItem>
+                            )}
+                            {totalPages > visibleEnd && (
+                                <PaginationItem>
+                                    <PaginationLink
+                                        href="#"
+                                        onClick={(e) => { e.preventDefault(); setPage(totalPages); }}
+                                        className={`w-9 h-9 border-none bg-transparent shadow-none text-[15px] transition-colors cursor-pointer
+                                            ${page === totalPages ? "font-bold text-[#088E48] hover:bg-transparent hover:text-[#088E48]" : "font-normal text-white/70 hover:bg-transparent hover:text-white"}`}
+                                    >
+                                        {totalPages}
+                                    </PaginationLink>
+                                </PaginationItem>
+                            )}
+                            <PaginationItem>
+                                <PaginationNext
+                                    href="#"
+                                    onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(totalPages, p + 1)); }}
+                                    className={`gap-1 text-[15px] font-semibold border-none bg-transparent shadow-none
+                                        ${page === totalPages ? "pointer-events-none text-gray-400" : "text-[#088E48] hover:text-[#06763c] hover:bg-transparent cursor-pointer"}`}
+                                />
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
+                );
+            })()}
+        </section>
     );
 }

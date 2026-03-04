@@ -8,6 +8,7 @@ import { Happening, happenings } from "@/data/happenings";
 import {
     Pagination,
     PaginationContent,
+    PaginationEllipsis,
     PaginationItem,
     PaginationLink,
     PaginationNext,
@@ -156,56 +157,99 @@ export default function NYCHappenings() {
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="mt-10">
-                        <Pagination>
-                            <PaginationContent>
-                                <PaginationItem>
-                                    <PaginationPrevious
-                                        href="#"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            handlePageChange(page - 1);
-                                        }}
-                                        className={page === 1 ? "pointer-events-none opacity-50 border border-gray-200" : "cursor-pointer border border-gray-200 text-gray-600 hover:border-[#088E48] hover:text-[#088E48] transition-colors"}
-                                    />
-                                </PaginationItem>
+                {totalPages > 1 && (() => {
+                    // Build the page number list: always show pages 1..visibleEnd, then ellipsis, then last
+                    const visibleEnd = Math.min(4, totalPages - 1); // pages 1-4 always visible
+                    const showEllipsis = totalPages > visibleEnd + 1;
+                    const visiblePages = Array.from({ length: visibleEnd }, (_, i) => i + 1);
 
-                                {Array.from({ length: totalPages }).map((_, i) => {
-                                    const pageNumber = i + 1;
-                                    return (
+                    return (
+                        <div className="mt-10">
+                            <Pagination>
+                                <PaginationContent className="gap-0">
+                                    {/* Previous */}
+                                    <PaginationItem>
+                                        <PaginationPrevious
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handlePageChange(page - 1);
+                                            }}
+                                            className={`gap-1 text-[15px] font-normal border-none bg-transparent shadow-none
+                                                ${page === 1
+                                                    ? "pointer-events-none text-gray-300"
+                                                    : "text-gray-600 hover:text-gray-900 hover:bg-transparent"
+                                                }`}
+                                        />
+                                    </PaginationItem>
+
+                                    {/* Visible page numbers */}
+                                    {visiblePages.map((pageNumber) => (
                                         <PaginationItem key={pageNumber}>
                                             <PaginationLink
                                                 href="#"
-                                                isActive={page === pageNumber}
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     handlePageChange(pageNumber);
                                                 }}
-                                                className={`w-9 h-9 transition-colors ${page === pageNumber
-                                                    ? "bg-[#088E48] text-white hover:bg-[#088E48]/90 hover:text-white border-[#088E48]"
-                                                    : "text-gray-600 hover:text-[#088E48]"}`}
+                                                className={`w-9 h-9 border-none bg-transparent shadow-none text-[15px] transition-colors
+                                                    ${page === pageNumber
+                                                        ? "font-bold text-[#088E48] hover:bg-transparent hover:text-[#088E48]"
+                                                        : "font-normal text-gray-600 hover:bg-transparent hover:text-gray-900"
+                                                    }`}
                                             >
                                                 {pageNumber}
                                             </PaginationLink>
                                         </PaginationItem>
-                                    );
-                                })}
+                                    ))}
 
-                                <PaginationItem>
-                                    <PaginationNext
-                                        href="#"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            handlePageChange(page + 1);
-                                        }}
-                                        className={page === totalPages ? "pointer-events-none opacity-50 border border-gray-200" : "cursor-pointer border border-gray-200 text-gray-600 hover:border-[#088E48] hover:text-[#088E48] transition-colors"}
-                                    />
-                                </PaginationItem>
-                            </PaginationContent>
-                        </Pagination>
-                    </div>
-                )}
+                                    {/* Ellipsis */}
+                                    {showEllipsis && (
+                                        <PaginationItem>
+                                            <PaginationEllipsis className="text-gray-400" />
+                                        </PaginationItem>
+                                    )}
+
+                                    {/* Last page */}
+                                    {totalPages > visibleEnd && (
+                                        <PaginationItem>
+                                            <PaginationLink
+                                                href="#"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    handlePageChange(totalPages);
+                                                }}
+                                                className={`w-9 h-9 border-none bg-transparent shadow-none text-[15px] transition-colors
+                                                    ${page === totalPages
+                                                        ? "font-bold text-[#088E48] hover:bg-transparent hover:text-[#088E48]"
+                                                        : "font-normal text-gray-600 hover:bg-transparent hover:text-gray-900"
+                                                    }`}
+                                            >
+                                                {totalPages}
+                                            </PaginationLink>
+                                        </PaginationItem>
+                                    )}
+
+                                    {/* Next */}
+                                    <PaginationItem>
+                                        <PaginationNext
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handlePageChange(page + 1);
+                                            }}
+                                            className={`gap-1 text-[15px] font-semibold border-none bg-transparent shadow-none
+                                                ${page === totalPages
+                                                    ? "pointer-events-none text-gray-300"
+                                                    : "text-[#088E48] hover:text-[#06763c] hover:bg-transparent"
+                                                }`}
+                                        />
+                                    </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
+                        </div>
+                    );
+                })()}
             </div>
         </section>
     );

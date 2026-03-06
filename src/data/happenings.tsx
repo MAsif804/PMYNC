@@ -9,6 +9,7 @@ export type Happening = {
     thumbnail: string;
     shortDescription: string;
     beneficiaries: string;
+    type: string[];
     avatars: string[];
     location: string;
     category: string;
@@ -154,6 +155,7 @@ export const happenings: Happening[] = [
         locations: defaultLocations,
         detailImages: defaultDetailImages,
         categories: ["projects"],
+        type: ["events",'All'],
     },
     {
         slug: "youth-climate-action-summit",
@@ -179,6 +181,7 @@ export const happenings: Happening[] = [
         locations: defaultLocations,
         detailImages: defaultDetailImages,
         categories: ["projects"],
+        type: ["blog","All"],
     },
     {
         slug: "the-2024-scholarship-winners",
@@ -203,6 +206,7 @@ export const happenings: Happening[] = [
         locations: defaultLocations,
         detailImages: defaultDetailImages,
         categories: ["projects"],
+        type: ["news","All"],
     },
     {
         slug: "national-startup-pitch-competition",
@@ -229,6 +233,7 @@ export const happenings: Happening[] = [
         locations: defaultLocations,
         detailImages: defaultDetailImages,
         categories: ["projects"],
+        type: ["news","All"],
     },
     {
         slug: "meeting-with-the-un-youth-envoy",
@@ -253,6 +258,7 @@ export const happenings: Happening[] = [
         locations: defaultLocations,
         detailImages: defaultDetailImages,
         categories: ["projects"],
+        type: ["news","All"],
     },
     {
         slug: "women-empowerment-forum",
@@ -281,6 +287,7 @@ export const happenings: Happening[] = [
         locations: defaultLocations,
         detailImages: defaultDetailImages,
         categories: ["projects"],
+        type: ["events","All"],
     },
     {
         slug: "rural-youth-development-initiative",
@@ -309,6 +316,7 @@ export const happenings: Happening[] = [
         locations: defaultLocations,
         detailImages: defaultDetailImages,
         categories: ["projects"],
+        type: ["events","All"],
     },
 
 ];

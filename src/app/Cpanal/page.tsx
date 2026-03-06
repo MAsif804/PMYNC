@@ -1,4 +1,5 @@
 "use client";
+import { MapPin, Plus } from "lucide-react";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -312,43 +313,68 @@ export default function CpanelPage() {
 
                             {/* PROJECTS */}
                             {tab === "projects" && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                                     {allProjects.map((p) => (
-                                        <div key={p.slug} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                                        <div key={p.slug} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow w-auto">
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img src={p.thumbnail} alt={p.title} className="w-full h-36 object-cover bg-gray-100" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                                            <img
+                                                src={p.thumbnail}
+                                                alt={p.title}
+                                                className="w-full h-64 object-cover bg-gray-100" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                                            />
                                             <div className="p-4">
-                                                <p className="font-bold text-gray-800 text-sm leading-snug line-clamp-2">{p.title}</p>
-                                                <p className="text-xs text-gray-400 mt-1">{p.dateStart} – {p.dateEnd}</p>
+                                                <p className="font-bold text-gray-800 text-sm leading-snug line-clamp-2">
+                                                    {p.title}
+                                                </p>
+                                                <p className="text-xs text-gray-400 mt-1">
+                                                    {p.dateStart} – {p.dateEnd}
+                                                </p>
                                                 <p className="text-xs text-gray-500 mt-2 line-clamp-2">{p.shortDescription}</p>
-                                                <div className="flex items-center gap-2 mt-3"><span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full">{p.beneficiaries} beneficiaries</span></div>
+                                                <div className="flex items-center gap-2 mt-3">
+                                                    <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full">
+                                                        {p.beneficiaries} beneficiaries
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
                                     <button onClick={() => openDrawer("project")} className="bg-white rounded-2xl border-2 border-dashed border-gray-200 hover:border-[#088E48] h-52 flex flex-col items-center justify-center gap-3 transition-all group">
-                                        <div className="w-12 h-12 rounded-xl bg-gray-100 group-hover:bg-[#088E48]/10 flex items-center justify-center transition-colors"><svg className="w-6 h-6 text-gray-400 group-hover:text-[#088E48]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg></div>
-                                        <p className="text-sm font-medium text-gray-400 group-hover:text-[#088E48]">Add New Project</p>
+                                        <div className="w-12 h-12 rounded-xl bg-gray-100 group-hover:bg-[#088E48]/10 flex items-center justify-center transition-colors">
+                                            <Plus className="w-6 h-6 text-gray-400 group-hover:text-[#088E48]" />
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-400 group-hover:text-[#088E48]">
+                                            Add New Project
+                                        </p>
                                     </button>
                                 </div>
                             )}
 
                             {/* EVENTS */}
                             {tab === "events" && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                                     {events.map((e) => (
                                         <div key={e.slug} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img src={e.thumbnail} alt={e.title} className="w-full h-36 object-cover bg-gray-100" onError={(e2) => { (e2.target as HTMLImageElement).style.display = "none"; }} />
+                                            <img src={e.thumbnail} alt={e.title} className="w-full h-64 object-cover bg-gray-100" onError={(e2) => { (e2.target as HTMLImageElement).style.display = "none"; }} />
                                             <div className="p-4">
-                                                {e.badge && <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${e.badge === "UpComing" ? "bg-orange-50 text-orange-600" : e.badge === "Story" ? "bg-purple-50 text-purple-600" : "bg-blue-50 text-blue-600"}`}>{e.badge}</span>}
+                                                {e.badge && 
+                                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${e.badge === "UpComing" ? "bg-orange-50 text-orange-600" : e.badge === "Story" ? "bg-purple-50 text-purple-600" : "bg-blue-50 text-blue-600"}`}>
+                                                    {e.badge}
+                                                </span>}
                                                 <p className="font-bold text-gray-800 text-sm leading-snug mt-2 line-clamp-2">{e.title}</p>
                                                 <p className="text-xs text-gray-400 mt-1">{e.category} · {e.dateStart}</p>
-                                                {e.location && <p className="text-xs text-gray-500 mt-1 line-clamp-1">📍 {e.location}</p>}
+                                                {e.location && 
+                                                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                                                    <MapPin className="w-4 h-4 text-gray-400" />
+                                                     {e.location}
+                                                    </div>}
                                             </div>
                                         </div>
                                     ))}
                                     <button onClick={() => openDrawer("event")} className="bg-white rounded-2xl border-2 border-dashed border-gray-200 hover:border-[#088E48] h-52 flex flex-col items-center justify-center gap-3 transition-all group">
-                                        <div className="w-12 h-12 rounded-xl bg-gray-100 group-hover:bg-[#088E48]/10 flex items-center justify-center transition-colors"><svg className="w-6 h-6 text-gray-400 group-hover:text-[#088E48]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg></div>
+                                        <div className="w-12 h-12 rounded-xl bg-gray-100 group-hover:bg-[#088E48]/10 flex items-center justify-center transition-colors">
+                                        <Plus className="w-6 h-6 text-gray-400 group-hover:text-[#088E48]" />
+                                        </div>
                                         <p className="text-sm font-medium text-gray-400 group-hover:text-[#088E48]">Add New Event</p>
                                     </button>
                                 </div>

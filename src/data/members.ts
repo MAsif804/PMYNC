@@ -25,42 +25,58 @@ export const allMembers: Member[] = [
     // ── Leadership ──
     {
         id: 1,
-        name: "Prime Minister of Pakistan",
-        location: "Lahore, Punjab",
-        province: "Punjab",
+        name: "Zaynab Ul Ghazali",
+        location: "Islamabad",
+        province: "Islamabad",
         designation: "Patron-in-Chief",
-        sectors: ["Policy Development", "Governance & Public Administration"],
+        sectors: [
+            "Policy Development",
+            "Governance & Public Administration"
+        ],
         description:
-            "Shehbaz Sharif is the Prime Minister of Pakistan, serving with a strong focus on economic stability, governance, and youth empowerment. His administration has launched numerous initiatives to uplift young Pakistanis through education, entrepreneurship, and civic engagement.",
-        image: "/prime-minister.png",
+            "Currently working as assistant manager research and advisory. Have worked as research assistant NDU, Alight Pakistan (an INGO focused on refugee crisis)",
+        image: "/members/zaynab-ui-ghazali.jpg",
         period: "2023 - present",
         yearStart: "2023",
         type: ["leadership", "member"],
-        slug: "prime-minister",
-        socials: {},
+        slug: "zaynab-ul-ghazali",
+        socials: { email: "zaynabulghazali@gmail.com",},
         achievements: [
-            { title: "Economic Stabilization", description: "Led Pakistan through a period of economic reform with focus on fiscal discipline and international partnerships." },
-            { title: "Youth Programme Launch", description: "Officially notified the Prime Minister's National Youth Council as a platform for youth policy input." },
+            {
+                title: "Assistant Manager Research and Advisory"
+                ,
+                description: "Currently working as assistant manager research and advisory. Have worked as research assistant NDU, Alight Pakistan (an INGO focused on refugee crisis)"
+            },
+            {
+                title: "Research Assistant NDU",
+                description: "Officially notified the Prime Minister's National Youth Council as a platform for youth policy input."
+            },
         ],
     },
     {
         id: 2,
-        name: "Rana Mashood Ahmad Khan",
-        location: "Lahore, Punjab",
-        province: "Punjab",
+        name: "Muhammad Nouman",
+        location: "Peshawar, Khyber Pakhtunkhwa",
+        province: "Khyber Pakhtunkhwa",
         designation: "Chairperson",
         sectors: ["Policy Development", "Youth Engagement"],
         description:
-            "Rana Mashood Ahmad Khan is the Chairperson of the Prime Minister's Youth Programme, leading initiatives for youth empowerment across Pakistan. He oversees the implementation of flagship programs connecting young leaders with opportunities.",
-        image: "/rana-mashood.png",
+            "My name is Muhammad Nouman from Khyber pakhtunkhwa Peshawar Pakistan, a dedicated lawyer and advocate for special persons' rights, serves as a member of the Prime Minister's National Youth Council Pakistan, focusing on policy-making and special persons' initiatives. I am also a member of the Commonwealth Students Association and Focal Person for Disabled Persons in KP, driving positive change and inclusivity.",
+        image: "/members/muhammad-nouman.jpg",
         period: "2023 - present",
         yearStart: "2023",
         type: ["leadership", "member"],
-        slug: "rana-mashood",
-        socials: {},
+        slug: "muhammad-nouman",
+        socials: { email: "mn247682@gmail.com",},
         achievements: [
-            { title: "Youth Programme Leadership", description: "Successfully expanded the PM Youth Programme to all provinces, reaching over 1 million young people." },
-            { title: "Policy Advocacy", description: "Championed youth-centric policies at the federal level, resulting in dedicated youth development budget allocations." },
+            { 
+                title: "A member of the Prime Minister's National Youth Council Pakistan", 
+                description: "A member of the Prime Minister's National Youth Council Pakistan, focusing on policy-making and special persons' initiatives." 
+            },
+            { 
+                title: "Policy Advocacy", 
+                description: "Championed youth-centric policies at the federal level, resulting in dedicated youth development budget allocations." 
+            },
         ],
     },
     {
@@ -206,6 +222,22 @@ export const allMembers: Member[] = [
             { title: "Health Policy Advocacy", description: "Advocated for maternal and child health policies that were incorporated into the national health framework." },
             { title: "Rural Healthcare Access", description: "Spearheaded initiatives to bring basic healthcare services to 20+ remote communities in Balochistan." },
         ],
+    },
+    {
+        id: 3,
+        name: "Hassan Ashraf",
+        location: "Faisalabad",
+        province: "Punjab",
+        designation: " Member",
+        sectors: [],
+        description: "I'm Hassan  Member of NYC From Faisalabad, Pakistan. I have done Masters in journalism. I'm the co-Founder of a company named The Platform which is a coworking space. I'm also the Founder & CEO of Umeed foundation. Its a non-profitable organisation.  Through This foundation we educate child labourers and slums children free of cost all across Pakistan. We teach these children by going into there slums and underprivileged areas and by making small schools inside there slums so they can trust us easily and start getting education. My basic Aim is to give all underprivileged children a way & a platform to educate themselves where they can build their own future like other normal children. Alhamdulillah till now we have educated more than 2000 deserving children across Pakistan free of cost. We have currently 7 schools in 4 cities of Pakistan. Umeed will one day educate millions of children free of cost! Thats my dream  I have also recently won one of the world's most prestigious Humanitarian award. The Diana Award UK in 2021. I have also received several awards in Pakistan from Pakistan Government i.e Pride of Country, Hamary Heroes. Apart from all of this my hobby is to learn about new cultures and to meet new people. I love traveling around the world. I have traveled to many countries and attended many conferences and youth summits in different parts of the world and also won different awards there as well. ",
+        image: "/members/1772780194213.jpeg",
+        period: "2023 - present",
+        yearStart: "2025",
+        type: ["member"],
+        slug: "hassan-ashraf",
+        socials: { email: "hassan03326760556@gmail.com" },
+        achievements: [],
     },
 ];
 

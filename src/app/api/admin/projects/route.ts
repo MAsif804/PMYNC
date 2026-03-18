@@ -36,6 +36,9 @@ export async function POST(request: NextRequest) {
         const objectives = (p.objectives || []) as string[];
         const impacts = (p.impacts || []) as string[];
         const categories = (p.categories || ["projects"]) as string[];
+        const linkedHappenings = (p.linkedHappenings || []) as string[];
+        const dImgs = (p.detailImages && p.detailImages.length > 0) ? p.detailImages : [];
+        const imagesStr = dImgs.length > 0 ? `[${dImgs.map((img: string) => `"${img}"`).join(", ")}]` : `defaultDetailImages`;
         const slug = p.slug || p.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
         const entry = `    {
@@ -47,7 +50,7 @@ export async function POST(request: NextRequest) {
         shortDescription: "${(p.shortDescription || "").replace(/"/g, "'")}",
         beneficiaries: "${p.beneficiaries || ""}",
         avatars: [],
-        images: defaultDetailImages,
+        images: ${imagesStr},
         description: getDefaultDescription(),
         fullDescription: defaultFullDescription,
         objectives: [
@@ -57,8 +60,9 @@ ${objectives.map((o: string) => `            "${o.replace(/"/g, "'")}"`).join(",
 ${impacts.map((i: string) => `            "${i.replace(/"/g, "'")}"`).join(",\n")}
         ],
         locations: [${locations.map((l: string) => `"${l}"`).join(", ")}],
-        detailImages: defaultDetailImages,
+        detailImages: ${imagesStr},
         categories: [${categories.map((c: string) => `"${c}"`).join(", ")}],
+        linkedHappenings: [${linkedHappenings.map((h: string) => `"${h}"`).join(", ")}],
     },`;
 
         const insertIdx = content.lastIndexOf("];");

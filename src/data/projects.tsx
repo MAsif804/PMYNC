@@ -18,6 +18,7 @@ export type Project = {
     locations: string[];
     detailImages: string[];
     categories: string[];
+    linkedHappenings?: string[];
 };
 
 const defaultDetailImages = [

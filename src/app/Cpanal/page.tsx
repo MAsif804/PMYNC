@@ -7,8 +7,8 @@ type Tab = "dashboard" | "members" | "projects" | "events";
 type DrawerMode = "member" | "project" | "event" | null;
 
 interface MemberData { id: number; name: string; location: string; province: string; designation: string; sectors: string[]; description: string; image: string; period: string; yearStart: string; type: string[]; slug: string; socials: { email?: string; linkedin?: string; phone?: string }; achievements: { title: string; description: string }[]; }
-interface ProjectData { slug: string; title: string; dateStart: string; dateEnd: string; thumbnail: string; shortDescription: string; beneficiaries: string; locations: string[]; objectives: string[]; impacts: string[]; categories: string[]; }
-interface EventData { slug: string; title: string; dateStart: string; dateEnd: string; thumbnail: string; shortDescription: string; beneficiaries: string; badge: string; date: string; location: string; category: string; attendees: string; author: string; locations: string[]; objectives: string[]; impacts: string[]; categories: string[]; }
+interface ProjectData { slug: string; title: string; dateStart: string; dateEnd: string; thumbnail: string; shortDescription: string; beneficiaries: string; locations: string[]; objectives: string[]; impacts: string[]; categories: string[]; linkedHappenings?: string[]; detailImages?: string[]; }
+interface EventData { slug: string; title: string; dateStart: string; dateEnd: string; thumbnail: string; shortDescription: string; beneficiaries: string; badge: string; date: string; location: string; category: string; attendees: string; author: string; locations: string[]; objectives: string[]; impacts: string[]; categories: string[]; type?: string[]; detailImages?: string[]; }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const slugify = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -39,7 +39,7 @@ function ImageUpload({ folder, onUploaded, currentUrl }: { folder: string; onUpl
 
     return (
         <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-700">Photo / Thumbnail</label>
+            <label className="text-sm font-medium text-gray-700">Logo / Thumbnail</label>
             <div
                 onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
                 onDragLeave={() => setDrag(false)}
@@ -67,6 +67,64 @@ function ImageUpload({ folder, onUploaded, currentUrl }: { folder: string; onUpl
                         <div className="text-center"><p className="text-sm font-semibold text-gray-700">Drop image here or <span className="text-[#088E48]">browse</span></p><p className="text-xs text-gray-400 mt-0.5">PNG, JPG, WEBP up to 10MB</p></div>
                     </div>
                 )}
+            </div>
+        </div>
+    );
+}
+
+// ── MultiImageUpload ────────────────────────────────────────────────────────
+function MultiImageUpload({ folder, onChange, urls }: { folder: string; onChange: (urls: string[]) => void; urls: string[] }) {
+    const [uploading, setUploading] = useState(false);
+    const [drag, setDrag] = useState(false);
+    const ref = useRef<HTMLInputElement>(null);
+
+    const upload = useCallback(async (files: FileList) => {
+        setUploading(true);
+        const newUrls = [...urls];
+        for (let i = 0; i < files.length; i++) {
+            const fd = new FormData();
+            fd.append("file", files[i]);
+            fd.append("folder", folder);
+            const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+            const data = await res.json();
+            if (data.url) newUrls.push(data.url);
+        }
+        setUploading(false);
+        onChange(newUrls);
+    }, [folder, onChange, urls]);
+
+    const onDrop = (e: React.DragEvent) => { e.preventDefault(); setDrag(false); if (e.dataTransfer.files.length > 0) upload(e.dataTransfer.files); };
+
+    return (
+        <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-gray-700">Other Images</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {urls.map((u, i) => (
+                    <div key={i} className="relative rounded-xl overflow-hidden group aspect-video bg-gray-100">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={u} alt="uploaded" className="w-full h-full object-cover" />
+                        <button type="button" onClick={() => onChange(urls.filter((_, j) => j !== i))} className="absolute top-2 right-2 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                ))}
+                <div
+                    onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+                    onDragLeave={() => setDrag(false)}
+                    onDrop={onDrop}
+                    onClick={() => ref.current?.click()}
+                    className={`relative rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all aspect-video cursor-pointer ${drag ? "border-[#088E48] bg-[#088E48]/5" : "border-gray-200 hover:border-[#088E48] hover:bg-gray-50"}`}
+                >
+                    <input ref={ref} type="file" min="1" max="5" accept="image/*" multiple className="hidden" onChange={(e) => { if (e.target.files) upload(e.target.files); }} />
+                    {uploading ? (
+                        <div className="w-5 h-5 border-2 border-[#088E48] border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                        <>
+                            <Plus className="w-5 h-5 text-gray-400" />
+                            <span className="text-xs font-medium text-gray-500">Add Images</span>
+                        </>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -115,7 +173,20 @@ function StatCard({ label, count, icon, color, sub }: { label: string; count: nu
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function CpanelPage() {
-    const [tab, setTab] = useState<Tab>("dashboard");
+    const [tab, setTabState] = useState<Tab>("dashboard");
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        const t = localStorage.getItem("cpanelTab") as Tab;
+        if (t) setTabState(t);
+        setMounted(true);
+    }, []);
+
+    const setTab = (t: Tab) => {
+        setTabState(t);
+        localStorage.setItem("cpanelTab", t);
+    };
+
     const [drawer, setDrawer] = useState<DrawerMode>(null);
     const [members, setMembers] = useState<MemberData[]>([]);
     const [allProjects, setProjects] = useState<ProjectData[]>([]);
@@ -124,16 +195,29 @@ export default function CpanelPage() {
     const [saving, setSaving] = useState(false);
     const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
     const [search, setSearch] = useState("");
+    const [provinceFilter, setProvinceFilter] = useState("");
+    const [sectorFilter, setSectorFilter] = useState<string[]>([]);
+    const [isSectorOpen, setIsSectorOpen] = useState(false);
+
+    const [projectSearch, setProjectSearch] = useState("");
+    const [projectDateFilter, setProjectDateFilter] = useState("");
+    const [projectTeamFilter, setProjectTeamFilter] = useState<string[]>([]);
+    const [isProjectTeamOpen, setIsProjectTeamOpen] = useState(false);
+
+    const [eventSearch, setEventSearch] = useState("");
+    const [eventDateFilter, setEventDateFilter] = useState("");
+    const [eventTeamFilter, setEventTeamFilter] = useState<string[]>([]);
+    const [isEventTeamOpen, setIsEventTeamOpen] = useState(false);
 
     // Member form
     const defMember: Omit<MemberData, "id"> & { id: string } = { id: "", name: "", location: "", province: "", designation: "", sectors: [], description: "", image: "", period: "2023 - present", yearStart: "2023", type: ["member"], slug: "", socials: {}, achievements: [] };
     const [mf, setMf] = useState(defMember);
     // Project form
-    const defProject: ProjectData = { slug: "", title: "", dateStart: "", dateEnd: "", thumbnail: "", shortDescription: "", beneficiaries: "", locations: ["Islamabad"], objectives: [""], impacts: [""], categories: ["projects"] };
-    const [pf, setPf] = useState(defProject);
+    const defProject: ProjectData = { slug: "", title: "", dateStart: "", dateEnd: "", thumbnail: "", shortDescription: "", beneficiaries: "", locations: ["Islamabad"], objectives: [""], impacts: [""], categories: ["projects"], linkedHappenings: [], detailImages: [] };
+    const [pf, setPf] = useState<ProjectData>(defProject);
     // Event form
-    const defEvent: EventData = { slug: "", title: "", dateStart: "", dateEnd: "", thumbnail: "", shortDescription: "", beneficiaries: "", badge: "", date: "", location: "", category: "", attendees: "", author: "", locations: ["Islamabad"], objectives: [""], impacts: [""], categories: ["projects"] };
-    const [ef, setEf] = useState(defEvent);
+    const defEvent: EventData = { slug: "", title: "", dateStart: "", dateEnd: "", thumbnail: "", shortDescription: "", beneficiaries: "", badge: "", date: "", location: "", category: "", attendees: "", author: "", locations: ["Islamabad"], objectives: [""], impacts: [""], categories: ["projects"], type: ["All"], detailImages: [] };
+    const [ef, setEf] = useState<EventData>(defEvent);
 
     const showToast = (type: "success" | "error", message: string) => setToast({ type, message });
 
@@ -190,14 +274,43 @@ export default function CpanelPage() {
     const categories = ["Technology", "Education", "Health", "Policy Development", "Youth Leadership", "Global Policy", "Entrepreneurship", "Civic Engagement"];
     const labels: Record<Tab, string> = { dashboard: "Dashboard", members: "Members", projects: "Projects", events: "Events" };
 
-    const filteredMembers = members.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()) || m.designation.toLowerCase().includes(search.toLowerCase()));
+    const allSectors = Array.from(new Set(members.flatMap(m => m.sectors))).sort();
+
+    const filteredMembers = members.filter((m) => {
+        const matchesSearch = m.name.toLowerCase().includes(search.toLowerCase()) || m.designation.toLowerCase().includes(search.toLowerCase());
+        const matchesProvince = provinceFilter === "" || m.province === provinceFilter;
+        const matchesSector = sectorFilter.length === 0 || m.sectors.some(s => sectorFilter.includes(s));
+        return matchesSearch && matchesProvince && matchesSector;
+    });
+
+    const allProjectDates = Array.from(new Set(allProjects.map(p => p.dateStart).filter(Boolean))).sort();
+    const filteredProjects = allProjects.filter(p => {
+        const matchesSearch = p.title.toLowerCase().includes(projectSearch.toLowerCase());
+        const matchesDate = projectDateFilter === "" || p.dateStart === projectDateFilter;
+        // Since project data does not inherently have 'teamMembers' mapped to member names, we check if we added it,
+        // or safely pass if not implemented. For now, it assumes a property exists or ignores filter if empty.
+        const pTeam = (p as any).teamMembers || [];
+        const matchesTeam = projectTeamFilter.length === 0 || pTeam.some((m: string) => projectTeamFilter.includes(m));
+        return matchesSearch && matchesDate && matchesTeam;
+    });
+
+    const allEventDates = Array.from(new Set(events.map(e => e.dateStart).filter(Boolean))).sort();
+    const filteredEvents = events.filter(e => {
+        const matchesSearch = e.title.toLowerCase().includes(eventSearch.toLowerCase());
+        const matchesDate = eventDateFilter === "" || e.dateStart === eventDateFilter;
+        const eTeam = (e as any).teamMembers || [];
+        const matchesTeam = eventTeamFilter.length === 0 || eTeam.some((m: string) => eventTeamFilter.includes(m));
+        return matchesSearch && matchesDate && matchesTeam;
+    });
 
     const navItems: { id: Tab; label: string; icon: React.ReactNode }[] = [
         { id: "dashboard", label: "Dashboard", icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> },
         { id: "members", label: "Members", icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
         { id: "projects", label: "Projects", icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg> },
-        { id: "events", label: "Events", icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> },
+        { id: "events", label: "Happenings", icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> },
     ];
+
+    if (!mounted) return null;
 
     return (
         <div className="min-h-screen bg-[#f1f5f9] flex font-sans">
@@ -285,7 +398,50 @@ export default function CpanelPage() {
                                             <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                             <input className="pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] w-full" placeholder="Search members..." value={search} onChange={(e) => setSearch(e.target.value)} />
                                         </div>
-                                        <p className="text-sm text-gray-500">{filteredMembers.length} members</p>
+                                        <select
+                                            className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] transition-all"
+                                            value={provinceFilter}
+                                            onChange={(e) => setProvinceFilter(e.target.value)}
+                                        >
+                                            <option value="">All Provinces</option>
+                                            {provinces.map((p) => <option key={p} value={p}>{p}</option>)}
+                                        </select>
+
+                                        <div className="relative">
+                                            <button 
+                                                onClick={() => setIsSectorOpen(!isSectorOpen)} 
+                                                className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 flex items-center justify-between gap-2 hover:border-[#088E48] transition-all min-w-[140px]"
+                                            >
+                                                <span className="truncate max-w-[120px] text-left">
+                                                    {sectorFilter.length === 0 ? "All Sectors" : `${sectorFilter.length} selected`}
+                                                </span>
+                                                <svg className={`w-4 h-4 text-gray-400 transition-transform ${isSectorOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            {isSectorOpen && (
+                                                <>
+                                                    <div className="fixed inset-0 z-10" onClick={() => setIsSectorOpen(false)} />
+                                                    <div className="absolute left-0 top-full mt-2 w-64 bg-white border border-gray-100 rounded-xl shadow-lg z-20 py-2 max-h-64 overflow-y-auto flex flex-col">
+                                                        {allSectors.map(s => (
+                                                            <label key={s} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                                                                <input 
+                                                                    type="checkbox" 
+                                                                    className="w-4 h-4 text-[#088E48] rounded-sm border-gray-300 focus:ring-[#088E48]"
+                                                                    checked={sectorFilter.includes(s)}
+                                                                    onChange={(e) => {
+                                                                        if (e.target.checked) setSectorFilter([...sectorFilter, s]);
+                                                                        else setSectorFilter(sectorFilter.filter(sf => sf !== s));
+                                                                    }}
+                                                                />
+                                                                <span className="text-sm text-gray-700">{s}</span>
+                                                            </label>
+                                                        ))}
+                                                        {allSectors.length === 0 && <div className="px-4 py-2 text-sm text-gray-400">No sectors found</div>}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+
+                                        <p className="text-sm text-gray-500 shrink-0">{filteredMembers.length} members</p>
                                     </div>
                                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                                         <table className="w-full text-sm">
@@ -313,9 +469,58 @@ export default function CpanelPage() {
 
                             {/* PROJECTS */}
                             {tab === "projects" && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                                    {allProjects.map((p) => (
-                                        <div key={p.slug} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow w-auto">
+                                <div className="space-y-5">
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <div className="relative flex-1 min-w-[200px] max-w-xs">
+                                            <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                            <input className="pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] w-full" placeholder="Search projects..." value={projectSearch} onChange={(e) => setProjectSearch(e.target.value)} />
+                                        </div>
+                                        <select
+                                            className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] transition-all"
+                                            value={projectDateFilter}
+                                            onChange={(e) => setProjectDateFilter(e.target.value)}
+                                        >
+                                            <option value="">All Dates</option>
+                                            {allProjectDates.map((d) => <option key={d} value={d}>{d}</option>)}
+                                        </select>
+                                        <div className="relative">
+                                            <button 
+                                                onClick={() => setIsProjectTeamOpen(!isProjectTeamOpen)} 
+                                                className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 flex items-center justify-between gap-2 hover:border-[#088E48] transition-all min-w-[140px]"
+                                            >
+                                                <span className="truncate max-w-[120px] text-left">
+                                                    {projectTeamFilter.length === 0 ? "Team Members" : `${projectTeamFilter.length} selected`}
+                                                </span>
+                                                <svg className={`w-4 h-4 text-gray-400 transition-transform ${isProjectTeamOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            {isProjectTeamOpen && (
+                                                <>
+                                                    <div className="fixed inset-0 z-10" onClick={() => setIsProjectTeamOpen(false)} />
+                                                    <div className="absolute left-0 top-full mt-2 w-64 bg-white border border-gray-100 rounded-xl shadow-lg z-20 py-2 max-h-64 overflow-y-auto flex flex-col">
+                                                        {members.map(m => (
+                                                            <label key={m.id} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                                                                <input 
+                                                                    type="checkbox" 
+                                                                    className="w-4 h-4 text-[#088E48] rounded-sm border-gray-300 focus:ring-[#088E48]"
+                                                                    checked={projectTeamFilter.includes(m.name)}
+                                                                    onChange={(e) => {
+                                                                        if (e.target.checked) setProjectTeamFilter([...projectTeamFilter, m.name]);
+                                                                        else setProjectTeamFilter(projectTeamFilter.filter(mf => mf !== m.name));
+                                                                    }}
+                                                                />
+                                                                <span className="text-sm text-gray-700">{m.name}</span>
+                                                            </label>
+                                                        ))}
+                                                        {members.length === 0 && <div className="px-4 py-2 text-sm text-gray-400">No members found</div>}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-gray-500 ml-auto shrink-0">{filteredProjects.length} projects</p>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                                        {filteredProjects.map((p) => (
+                                            <div key={p.slug} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow w-auto">
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
                                                 src={p.thumbnail}
@@ -346,14 +551,64 @@ export default function CpanelPage() {
                                             Add New Project
                                         </p>
                                     </button>
+                                    </div>
                                 </div>
                             )}
 
-                            {/* EVENTS */}
+                            {/* HAPPENINGS */}
                             {tab === "events" && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                                    {events.map((e) => (
-                                        <div key={e.slug} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                                <div className="space-y-5">
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <div className="relative flex-1 min-w-[200px] max-w-xs">
+                                            <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                            <input className="pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] w-full" placeholder="Search happenings..." value={eventSearch} onChange={(e) => setEventSearch(e.target.value)} />
+                                        </div>
+                                        <select
+                                            className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] transition-all"
+                                            value={eventDateFilter}
+                                            onChange={(e) => setEventDateFilter(e.target.value)}
+                                        >
+                                            <option value="">All Dates</option>
+                                            {allEventDates.map((d) => <option key={d} value={d}>{d}</option>)}
+                                        </select>
+                                        <div className="relative">
+                                            <button 
+                                                onClick={() => setIsEventTeamOpen(!isEventTeamOpen)} 
+                                                className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 flex items-center justify-between gap-2 hover:border-[#088E48] transition-all min-w-[140px]"
+                                            >
+                                                <span className="truncate max-w-[120px] text-left">
+                                                    {eventTeamFilter.length === 0 ? "Team Members" : `${eventTeamFilter.length} selected`}
+                                                </span>
+                                                <svg className={`w-4 h-4 text-gray-400 transition-transform ${isEventTeamOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            {isEventTeamOpen && (
+                                                <>
+                                                    <div className="fixed inset-0 z-10" onClick={() => setIsEventTeamOpen(false)} />
+                                                    <div className="absolute left-0 top-full mt-2 w-64 bg-white border border-gray-100 rounded-xl shadow-lg z-20 py-2 max-h-64 overflow-y-auto flex flex-col">
+                                                        {members.map(m => (
+                                                            <label key={m.id} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                                                                <input 
+                                                                    type="checkbox" 
+                                                                    className="w-4 h-4 text-[#088E48] rounded-sm border-gray-300 focus:ring-[#088E48]"
+                                                                    checked={eventTeamFilter.includes(m.name)}
+                                                                    onChange={(e) => {
+                                                                        if (e.target.checked) setEventTeamFilter([...eventTeamFilter, m.name]);
+                                                                        else setEventTeamFilter(eventTeamFilter.filter(mf => mf !== m.name));
+                                                                    }}
+                                                                />
+                                                                <span className="text-sm text-gray-700">{m.name}</span>
+                                                            </label>
+                                                        ))}
+                                                        {members.length === 0 && <div className="px-4 py-2 text-sm text-gray-400">No members found</div>}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-gray-500 ml-auto shrink-0">{filteredEvents.length} happenings</p>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                                        {filteredEvents.map((e) => (
+                                            <div key={e.slug} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img src={e.thumbnail} alt={e.title} className="w-full h-64 object-cover bg-gray-100" onError={(e2) => { (e2.target as HTMLImageElement).style.display = "none"; }} />
                                             <div className="p-4">
@@ -375,8 +630,9 @@ export default function CpanelPage() {
                                         <div className="w-12 h-12 rounded-xl bg-gray-100 group-hover:bg-[#088E48]/10 flex items-center justify-center transition-colors">
                                         <Plus className="w-6 h-6 text-gray-400 group-hover:text-[#088E48]" />
                                         </div>
-                                        <p className="text-sm font-medium text-gray-400 group-hover:text-[#088E48]">Add New Event</p>
+                                        <p className="text-sm font-medium text-gray-400 group-hover:text-[#088E48]">Add New Happening</p>
                                     </button>
+                                    </div>
                                 </div>
                             )}
                         </>
@@ -392,7 +648,7 @@ export default function CpanelPage() {
                         {/* Drawer Header */}
                         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
                             <div>
-                                <h2 className="text-lg font-bold text-gray-900">{drawer === "member" ? "Add New Member" : drawer === "project" ? "Add New Project" : "Add New Event"}</h2>
+                                <h2 className="text-lg font-bold text-gray-900">{drawer === "member" ? "Add New Member" : drawer === "project" ? "Add New Project" : "Add New Happening"}</h2>
                                 <p className="text-xs text-gray-400 mt-0.5">Fill in the details and click Save</p>
                             </div>
                             <button onClick={closeDrawer} className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors">
@@ -415,6 +671,7 @@ export default function CpanelPage() {
                                         <div><label className="text-xs font-medium text-gray-600 mb-1 block">Year Start</label><input className={ic} placeholder="2023" value={mf.yearStart} onChange={(e) => setMf((f) => ({ ...f, yearStart: e.target.value }))} /></div>
                                         <div><label className="text-xs font-medium text-gray-600 mb-1 block">Email</label><input className={ic} placeholder="email@example.com" value={mf.socials.email || ""} onChange={(e) => setMf((f) => ({ ...f, socials: { ...f.socials, email: e.target.value } }))} /></div>
                                         <div><label className="text-xs font-medium text-gray-600 mb-1 block">LinkedIn</label><input className={ic} placeholder="https://linkedin.com/in/..." value={mf.socials.linkedin || ""} onChange={(e) => setMf((f) => ({ ...f, socials: { ...f.socials, linkedin: e.target.value } }))} /></div>
+                                        <div><label className="text-xs font-medium text-gray-600 mb-1 block">Phone</label><input className={ic} placeholder="+92 300 1234567" value={mf.socials.phone || ""} onChange={(e) => setMf((f) => ({ ...f, socials: { ...f.socials, phone: e.target.value } }))} /></div>
                                     </div>
                                     <div><label className="text-xs font-medium text-gray-600 mb-1 block">Slug (auto)</label><input className={ic + " bg-gray-50"} value={mf.slug} onChange={(e) => setMf((f) => ({ ...f, slug: e.target.value }))} /></div>
                                     <div><label className="text-xs font-medium text-gray-600 mb-1 block">Sectors (comma separated)</label><input className={ic} placeholder="Digital Skills, Entrepreneurship" value={mf.sectors.join(", ")} onChange={(e) => setMf((f) => ({ ...f, sectors: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) }))} /></div>
@@ -448,6 +705,14 @@ export default function CpanelPage() {
                                     <DynList label="Locations" items={pf.locations} placeholder="e.g. Islamabad" onChange={(v) => setPf((f) => ({ ...f, locations: v }))} />
                                     <DynList label="Key Objectives" items={pf.objectives} placeholder="e.g. Empower youth" onChange={(v) => setPf((f) => ({ ...f, objectives: v }))} />
                                     <DynList label="Impacts" items={pf.impacts} placeholder="e.g. 500+ trained" onChange={(v) => setPf((f) => ({ ...f, impacts: v }))} />
+                                    <div>
+                                        <label className="text-xs font-medium text-gray-600 mb-1 block">Linked Happenings</label>
+                                        <select multiple className={sel + " h-24"} value={pf.linkedHappenings || []} onChange={(e) => setPf(f => ({ ...f, linkedHappenings: Array.from(e.target.selectedOptions, o => o.value) }))}>
+                                            {events.map(ev => <option key={ev.slug} value={ev.slug}>{ev.title}</option>)}
+                                        </select>
+                                        <p className="text-[10px] text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                                    </div>
+                                    <MultiImageUpload folder="nyc-project" urls={pf.detailImages || []} onChange={(urls) => setPf(f => ({ ...f, detailImages: urls }))} />
                                 </>
                             )}
 
@@ -471,6 +736,8 @@ export default function CpanelPage() {
                                     <DynList label="Locations" items={ef.locations} placeholder="e.g. Islamabad" onChange={(v) => setEf((f) => ({ ...f, locations: v }))} />
                                     <DynList label="Key Objectives" items={ef.objectives} placeholder="e.g. Empower youth" onChange={(v) => setEf((f) => ({ ...f, objectives: v }))} />
                                     <DynList label="Impacts" items={ef.impacts} placeholder="e.g. 500+ attended" onChange={(v) => setEf((f) => ({ ...f, impacts: v }))} />
+                                    <div><label className="text-xs font-medium text-gray-600 mb-1 block">Happening Type (comma separated)</label><input className={ic} placeholder="events, All" value={(ef.type || []).join(", ")} onChange={(e) => setEf((f) => ({ ...f, type: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) }))} /></div>
+                                    <MultiImageUpload folder="nyc-happening" urls={ef.detailImages || []} onChange={(urls) => setEf(f => ({ ...f, detailImages: urls }))} />
                                 </>
                             )}
                         </div>
@@ -485,7 +752,7 @@ export default function CpanelPage() {
                             >
                                 {saving ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Saving...</> : <>
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                    Save {drawer === "member" ? "Member" : drawer === "project" ? "Project" : "Event"}
+                                    Save {drawer === "member" ? "Member" : drawer === "project" ? "Project" : "Happening"}
                                 </>}
                             </button>
                         </div>

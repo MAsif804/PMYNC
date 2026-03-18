@@ -42,6 +42,9 @@ export async function POST(request: NextRequest) {
         const objectives = (h.objectives || []) as string[];
         const impacts = (h.impacts || []) as string[];
         const categories = (h.categories || ["projects"]) as string[];
+        const type = (h.type || ["All"]) as string[];
+        const dImgs = (h.detailImages && h.detailImages.length > 0) ? h.detailImages : [];
+        const imagesStr = dImgs.length > 0 ? `[${dImgs.map((img: string) => `"${img}"`).join(", ")}]` : `defaultDetailImages`;
         const slug = h.slug || h.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
         const badgeLine = h.badge ? `\n        badge: "${h.badge}",` : "";
@@ -60,7 +63,7 @@ export async function POST(request: NextRequest) {
         category: "${h.category || ""}",
         attendees: "${h.attendees || ""}",${authorLine}
         avatars: [],
-        images: defaultDetailImages,
+        images: ${imagesStr},
         description: getDefaultDescription(),
         fullDescription: defaultFullDescription,
         objectives: [
@@ -70,8 +73,9 @@ ${objectives.map((o: string) => `            "${o.replace(/"/g, "'")}"`).join(",
 ${impacts.map((i: string) => `            "${i.replace(/"/g, "'")}"`).join(",\n")}
         ],
         locations: [${locations.map((l: string) => `"${l}"`).join(", ")}],
-        detailImages: defaultDetailImages,
+        detailImages: ${imagesStr},
         categories: [${categories.map((c: string) => `"${c}"`).join(", ")}],
+        type: [${type.map((t: string) => `"${t}"`).join(", ")}],
     },`;
 
         const insertIdx = content.lastIndexOf("];");

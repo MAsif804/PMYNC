@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Linkedin, MapPin, Phone } from "lucide-react";
 import {
     Carousel,
@@ -10,6 +9,8 @@ import {
     CarouselPrevious,
 } from "@/components/ui/carousel";
 import Link from "next/link";
+import { allMembers } from "@/data/members";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 type Leader = {
     id: number;
@@ -20,6 +21,7 @@ type Leader = {
     image: string;
     period: string;
     sectors: string[];
+    slug: string;
     socials: {
         linkedin?: string;
         email?: string;
@@ -27,16 +29,18 @@ type Leader = {
     };
 };
 
-const leaders: Leader[] = [
+// Fallback hardcoded leaders used when no linkedMembers are provided
+const fallbackLeaders: Leader[] = [
     {
         id: 1,
         name: "Fakhar Jabran",
         designation: ["Member", "Entrepreneur"],
         location: "Bhimber, KPK",
-        description: "Entrepreneurship/ Founder of 4 startups. Winner  of PM National Innovation Award. Started  Connect and strategic policy making to empower young leaders.",
-        image: "/meet-the-team/team-member-1.png", // Reusing available profile images
+        description: "Entrepreneurship/ Founder of 4 startups. Winner of PM National Innovation Award. Started Connect and strategic policy making to empower young leaders.",
+        image: "/meet-the-team/team-member-1.png",
         period: "2023 - present",
         sectors: ["Digital Skills", "Entrepreneurship"],
+        slug: "fakhar-jabran",
         socials: { linkedin: "#", email: "#", phone: "#" },
     },
     {
@@ -44,10 +48,11 @@ const leaders: Leader[] = [
         name: "Ayesha Malik",
         designation: ["Member", "Entrepreneur"],
         location: "Rawlakot, KPK",
-        description: "Health & wellbeing/ Diana Award winner,  Represented Pakistan in Summer Sisters exchange  program.",
+        description: "Health & wellbeing/ Diana Award winner, Represented Pakistan in Summer Sisters exchange program.",
         image: "/meet-the-team/team-member-2.jpg",
         period: "2023 - present",
         sectors: ["Health & Wellbeing", "Education"],
+        slug: "ayesha-malik",
         socials: {},
     },
     {
@@ -55,10 +60,11 @@ const leaders: Leader[] = [
         name: "Rana Mashhood",
         designation: ["Member", "Entrepreneur"],
         location: "Rawlakot, KPK",
-        description: "A youth representative from Balochistan dedicated to advancing climate resilience, empowering local communities, and fostering sustainable development. ",
+        description: "A youth representative from Balochistan dedicated to advancing climate resilience, empowering local communities, and fostering sustainable development.",
         image: "/meet-the-team/team-member-3.jpg",
         period: "2022 - present",
         sectors: ["Climate Change", "Education"],
+        slug: "rana-mashhood",
         socials: { linkedin: "#", email: "#", phone: "#" },
     },
     {
@@ -66,24 +72,26 @@ const leaders: Leader[] = [
         name: "Malik Faisal",
         designation: ["Member", "Entrepreneur"],
         location: "Rawlakot, KPK",
-        description: "Malik Faisal Ayub Khokhar is the minister for Youth Affairs, leading ini...",
+        description: "Malik Faisal Ayub Khokhar is the minister for Youth Affairs, leading youth development initiatives.",
         image: "/meet-the-team/team-member-4.png",
         period: "2022 - present",
         sectors: ["Education", "Environment"],
+        slug: "malik-faisal",
         socials: { linkedin: "#", email: "#" },
     },
 ];
 
 function TeamCard({ leader }: { leader: Leader }) {
-
     return (
         <div className="bg-white rounded-[12px] p-4 shadow-sm border border-[#E7E7E7] hover:shadow-lg transition-all duration-300 flex flex-col h-full group">
             {/* Image Section */}
             <div className="relative rounded-[8px] overflow-hidden mb-4 aspect-[4/3]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                     src={leader.image}
                     alt={leader.name}
                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(leader.name)}&background=088E48&color=fff&size=256`; }}
                 />
 
                 {/* Top-left Badge */}
@@ -94,16 +102,16 @@ function TeamCard({ leader }: { leader: Leader }) {
                 </div>
 
                 {/* Top-right Social Badges */}
-                <div className="absolute top-3 right-3 flex flex-col gap-2">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute top-3 right-3 flex flex-col gap-2">
                     {leader.socials.linkedin && (
                         <a href={leader.socials.linkedin} className="w-8 h-8 rounded-full bg-[#0076B2] shadow-sm flex items-center justify-center hover:bg-[#0A66C2] hover:text-white text-[#0A66C2] transition-colors">
                             <Linkedin className="w-4 h-4 fill-white text-white" />
                         </a>
                     )}
                     {leader.socials.email && (
-                        <a href={leader.socials.email} className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-black hover:text-white text-[#1A1A1A] transition-colors">
+                        <a href={`mailto:${leader.socials.email}`} className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-black hover:text-white text-[#1A1A1A] transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="12" viewBox="0 0 16 12" fill="none">
-                                <g clip-path="url(#clip0_920_5156)">
+                                <g clipPath="url(#clip0_920_5156)">
                                     <path d="M3.63637 11.9408V5.791L1.71919 4.04615L0 3.07788V10.8556C0 11.4561 0.489062 11.9408 1.09094 11.9408H3.63637Z" fill="#4285F4" />
                                     <path d="M12.3638 11.941H14.9092C15.5129 11.941 16.0001 11.4544 16.0001 10.8557V3.07812L14.0529 4.18716L12.3638 5.79118V11.941Z" fill="#34A853" />
                                     <path d="M3.63636 5.79114L3.37549 3.38821L3.63636 1.08838L7.99999 4.34417L12.3636 1.08838L12.6554 3.26405L12.3636 5.79114L7.99999 9.04693L3.63636 5.79114Z" fill="#EA4335" />
@@ -119,7 +127,7 @@ function TeamCard({ leader }: { leader: Leader }) {
                         </a>
                     )}
                     {leader.socials.phone && (
-                        <a href={leader.socials.phone} className="w-8 h-8 rounded-full bg-[#088E48] white shadow-sm flex items-center justify-center hover:bg-[#088E48] text-white hover:text-[#088E48] transition-colors">
+                        <a href={`tel:${leader.socials.phone}`} className="w-8 h-8 rounded-full bg-[#088E48] shadow-sm flex items-center justify-center text-white transition-colors">
                             <Phone className="w-4 h-4" />
                         </a>
                     )}
@@ -143,7 +151,7 @@ function TeamCard({ leader }: { leader: Leader }) {
                 <div className="mb-2">
                     <span className="block text-[14px] text-[#90A1B9] mb-1 font-normal">Designations</span>
                     <div className="inline-flex items-center rounded-md bg-[#E6FFE6] px-2 py-[2px]">
-                        <span className="text-[12px] font-Roboto font-normal text-[#088E48]">{leader.designation}</span>
+                        <span className="text-[12px] font-Roboto font-normal text-[#088E48]">{(leader.designation || []).join(", ")}</span>
                     </div>
                 </div>
 
@@ -160,51 +168,86 @@ function TeamCard({ leader }: { leader: Leader }) {
                 </div>
 
                 {/* Description */}
-                <p className="text-[14px] font-Roboto font-normal text-[#808080] leading-[1.6]">
-                    {leader.description}{" "}
-                    <Link href="#" className="text-[#0066FF] underline decoration-[#0066FF]/50 underline-offset-2 hover:decoration-[#0066FF] font-medium inline-block">
-                        Read more
-                    </Link>
-                </p>
+                <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                        <p className="text-[14px] font-Roboto font-normal text-[#808080] leading-[1.6]">
+                             {leader.description.length > 95 ? leader.description.slice(0, 95).trim() + "... " : leader.description + " "}
+                            <Link href={`/members/${leader.slug}`} className="text-[#0066FF] underline decoration-[#0066FF]/50 underline-offset-2 hover:decoration-[#0066FF] font-medium inline-block">
+                                Read more
+                            </Link>
+                        </p>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[300px] bg-white border shadow-lg z-[100] px-3 py-2">
+                                <p className="text-sm font-Roboto text-gray-700 leading-relaxed">{leader.description}</p>
+                            </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </div>
-        </div>
-    );
+            </div>
+            );
 }
 
+            export default function ProjectTeam({linkedMembers}: {linkedMembers ?: string[]}) {
+                let displayLeaders: Leader[];
 
-export default function ProjectTeam() {
-    return (
-        <section className="py-16 bg-white">
-            <div className="container relative">
-                {/* Header */}
-                <div className="flex flex-col items-center text-center mb-10 relative">
-                    <h2 className="text-[32px] sm:text-[40px] font-bold uppercase tracking-tight text-[#1A1A1A] mb-2">
-                        MEET THE TEAM
-                    </h2>
-                    <p className="text-[#6A7282] font-Roboto text-[18px]">
-                        Dedicated professionals leading Leadership Development Program across Pakistan
-                    </p>
+    if (linkedMembers && linkedMembers.length > 0) {
+                displayLeaders = linkedMembers
+                    .map(slug => {
+                        const m = allMembers.find(mb => mb.slug === slug);
+                        if (!m) return null;
+                        return {
+                            id: m.id,
+                            name: m.name,
+                            designation: Array.isArray(m.designation) ? m.designation : [m.designation as string],
+                            location: m.location,
+                            description: m.description,
+                            image: m.image,
+                            period: m.period,
+                            sectors: m.sectors,
+                            slug: m.slug,
+                            socials: m.socials,
+                        } as Leader;
+                    })
+                    .filter((l): l is Leader => l !== null);
+    } else {
+                displayLeaders = fallbackLeaders;
+    }
+
+            if (displayLeaders.length === 0) return null;
+
+            return (
+            <section className="py-16 bg-white">
+                <div className="container relative">
+                    {/* Header */}
+                    <div className="flex flex-col items-center text-center mb-10 relative">
+                        <h2 className="text-[32px] sm:text-[40px] font-bold uppercase tracking-tight text-[#1A1A1A] mb-2">
+                            MEET THE TEAM
+                        </h2>
+                        <p className="text-[#6A7282] font-Roboto text-[18px]">
+                            Dedicated professionals leading this project across Pakistan
+                        </p>
+                    </div>
+
+                    {/* Carousel wrapper */}
+                    <div className="relative">
+                        <Carousel opts={{ align: "start", loop: false }} className="w-full">
+                            {/* Carousel Navigation */}
+                            <div className="absolute -top-[70px] right-0 hidden lg:flex gap-2">
+                                <CarouselPrevious className="static translate-y-0 h-8 w-8 bg-[#088E48] hover:bg-[#067A3D] text-white border-none rounded-[4px] flex items-center justify-center [&>svg]:w-4 [&>svg]:h-4" />
+                                <CarouselNext className="static translate-y-0 h-8 w-8 bg-[#088E48] hover:bg-[#067A3D] text-white border-none rounded-[4px] flex items-center justify-center [&>svg]:w-4 [&>svg]:h-4" />
+                            </div>
+
+                            <CarouselContent className="-ml-5">
+                                {displayLeaders.map((leader) => (
+                                    <CarouselItem key={leader.id} className="pl-5 md:basis-1/2 lg:basis-1/3">
+                                        <TeamCard leader={leader} />
+                                    </CarouselItem>
+                                ))}
+                            </CarouselContent>
+                        </Carousel>
+                    </div>
                 </div>
-
-                {/* Carousel wrapper */}
-                <div className="relative">
-                    <Carousel opts={{ align: "start", loop: false }} className="w-full">
-                        {/* Carousel Navigation */}
-                        <div className="absolute -top-[70px] right-0 hidden lg:flex gap-2">
-                            <CarouselPrevious className="static translate-y-0 h-8 w-8 bg-[#088E48] hover:bg-[#067A3D] text-white border-none rounded-[4px] flex items-center justify-center [&>svg]:w-4 [&>svg]:h-4" />
-                            <CarouselNext className="static translate-y-0 h-8 w-8 bg-[#088E48] hover:bg-[#067A3D] text-white border-none rounded-[4px] flex items-center justify-center [&>svg]:w-4 [&>svg]:h-4" />
-                        </div>
-
-                        <CarouselContent className="-ml-5">
-                            {leaders.map((leader) => (
-                                <CarouselItem key={leader.id} className="pl-5 md:basis-1/2 lg:basis-1/3">
-                                    <TeamCard leader={leader} />
-                                </CarouselItem>
-                            ))}
-                        </CarouselContent>
-                    </Carousel>
-                </div>
-            </div>
-        </section>
-    );
+            </section>
+            );
 }

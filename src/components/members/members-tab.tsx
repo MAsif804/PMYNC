@@ -12,6 +12,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // ─── Type (must match tabs.tsx) ───────────────────────────────────────────────
 export type Member = {
@@ -19,7 +20,7 @@ export type Member = {
     name: string;
     location: string;
     province: string;
-    designation: string;
+    designation: string[];
     sectors: string[];
     description: string;
     socials: {
@@ -40,7 +41,7 @@ const ITEMS_PER_PAGE = 6;
 function MemberCard({ m }: { m: Member }) {
     return (
         <Link href={`/members/${m.slug}`} className="block h-full">
-            <div className="bg-white rounded-[12px] p-4 shadow-sm border border-[#E7E7E7] hover:shadow-lg hover:border-[#088E48]/30 transition-all duration-300 flex flex-col h-full group cursor-pointer">
+            <div className="group bg-white rounded-[12px] p-4 shadow-sm border border-[#E7E7E7] hover:shadow-lg hover:border-[#088E48]/30 transition-all duration-300 flex flex-col h-full group cursor-pointer">
                 {/* Image Section */}
                 <div className="relative rounded-[8px] overflow-hidden mb-4 aspect-[4/3]">
                     <img
@@ -57,7 +58,7 @@ function MemberCard({ m }: { m: Member }) {
                     </div>
 
                     {/* Top-right Social Badges */}
-                    <div className="absolute top-3 right-3 flex flex-col gap-2">
+                    <div className="group-hover:opacity-100 opacity-0 transition-opacity duration-300 absolute top-3 right-3 flex flex-col gap-2">
                         {m.socials.linkedin && (
                             <a href={m.socials.linkedin} className="w-8 h-8 rounded-full bg-[#0076B2] shadow-sm flex items-center justify-center hover:bg-[#0A66C2] hover:text-white text-[#0A66C2] transition-colors">
                                 <Linkedin className="w-4 h-4 fill-white text-white" />
@@ -90,7 +91,7 @@ function MemberCard({ m }: { m: Member }) {
                 </div>
 
                 {/* Content Section */}
-                <div className="p-4 flex flex-col flex-grow">
+                <div className="flex flex-col flex-grow">
                     {/* Name and Location row */}
                     <div className="flex justify-between items-start mb-2">
                         <h3 className="text-[16px] font-Roboto font-semibold text-[#000000] max-w-[65%] leading-tight">
@@ -106,7 +107,7 @@ function MemberCard({ m }: { m: Member }) {
                     <div className="mb-2">
                         <span className="block text-[14px] text-[#90A1B9] mb-1 font-normal">Designations</span>
                         <div className="inline-flex items-center rounded-md bg-[#E6FFE6] px-2 py-[2px]">
-                            <span className="text-[12px] font-Roboto font-normal text-[#088E48]">{m.designation}</span>
+                            <span className="text-[12px] font-Roboto font-normal text-[#088E48]">{(m.designation || []).join(", ")}</span>
                         </div>
                     </div>
 
@@ -123,9 +124,21 @@ function MemberCard({ m }: { m: Member }) {
                     </div>
 
                     {/* Description */}
-                    <p className="text-[14px] font-Roboto font-normal text-[#808080] leading-[1.6] line-clamp-3">
-                        {m.description}
-                    </p>
+                    <TooltipProvider delayDuration={300}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <p className="text-[14px] font-Roboto font-normal text-[#808080] leading-[1.6]">
+                                    {m.description.length > 95 ? m.description.slice(0, 95).trim() + "... " : m.description + " "}
+                                    {m.description.length > 95 && (
+                                        <span className="text-[#0066FF] hover:underline font-medium cursor-pointer">Read more</span>
+                                    )}
+                                </p>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-[300px] bg-white border shadow-lg z-[100] px-3 py-2">
+                                <p className="text-sm font-Roboto text-gray-700 leading-relaxed">{m.description}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
             </div>
         </Link>

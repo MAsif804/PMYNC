@@ -15,7 +15,7 @@ export default function LeadershipProfiles() {
         {
             name: "Prime Minister of Pakistan",
             location: "Lahore, Punjab",
-            designation: "Patron-in Chief",
+            designation: ["Patron-in Chief"],
             sectors: ["Policy Development", "Governance & Public Administration"],
             description: "Shehbaz Sharif is the Prime Minister of Pakistan, serving with a strong focus on economic stability, gov...",
             image: "/prime-minister.png",
@@ -24,7 +24,7 @@ export default function LeadershipProfiles() {
         {
             name: "Rana Mashood Ahmad Khan",
             location: "Lahore, Punjab",
-            designation: "Chairperson",
+            designation: ["Chairperson"],
             sectors: ["Policy Development", "Youth Engagement"],
             description: "Rana Mashood Ahmad Khan is the Chairperson of the Prime Minister&apos;s Youth Programme, leading ini...",
             image: "/rana-mashood.png",
@@ -33,7 +33,7 @@ export default function LeadershipProfiles() {
         {
             name: "Malik Faisal Ayub Khokhar",
             location: "Lahore, Punjab",
-            designation: "Minister for Youth Affairs",
+            designation: ["Minister for Youth Affairs"],
             sectors: ["Youth Leadership", "Civic Engagement"],
             description: "Malik Faisal Ayub Khokhar is the minister for Youth Affairs, leading ini...",
             image: "/malik-faisal.png",
@@ -42,7 +42,7 @@ export default function LeadershipProfiles() {
         {
             name: "Malik Faisal Ayub Khokhar",
             location: "Lahore, Punjab",
-            designation: "Minister for Youth Affairs",
+            designation: ["Minister for Youth Affairs"],
             sectors: ["Youth Leadership", "Civic Engagement"],
             description: "Malik Faisal Ayub Khokhar is the minister for Youth Affairs, leading ini...",
             image: "/malik-faisal.png",
@@ -116,7 +116,7 @@ export default function LeadershipProfiles() {
                                         <div className="mb-2">
                                             <span className="block text-[14px] text-[#90A1B9] mb-1 font-normal">Designations</span>
                                             <div className="inline-flex items-center rounded-md bg-[#E6FFE6] px-2 py-[2px]">
-                                                <span className="text-[12px] font-Roboto font-normal text-[#088E48]">{leader.designation}</span>
+                                                <span className="text-[12px] font-Roboto font-normal text-[#088E48]">{(leader.designation || []).join(", ")}</span>
                                             </div>
                                         </div>
 

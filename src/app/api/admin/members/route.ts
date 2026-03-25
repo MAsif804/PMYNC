@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
         name: "${(m.name || "").replace(/"/g, "'")}",
         location: "${(m.location || "").replace(/"/g, "'")}",
         province: "${(m.province || "").replace(/"/g, "'")}",
-        designation: "${(m.designation || "").replace(/"/g, "'")}",
+        designation: [${(Array.isArray(m.designation) ? m.designation : [m.designation]).filter(Boolean).map((d: string) => `"${(d || "").replace(/"/g, "'")}"`).join(", ")}],
         sectors: [${sectors.map((s: string) => `"${s.replace(/"/g, "'")}"`).join(", ")}],
         description: "${(m.description || "").replace(/"/g, "'")}",
         image: "${m.image || "/members/placeholder.jpg"}",
@@ -86,6 +86,40 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true });
     } catch (err) {
         console.error("Members POST error:", err);
+        return NextResponse.json({ error: String(err) }, { status: 500 });
+    }
+}
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const { id } = await request.json();
+        if (!id) return NextResponse.json({ error: "No ID provided" }, { status: 400 });
+
+        const filePath = path.join(process.cwd(), "src", "data", "members.ts");
+        let content = await readFile(filePath, "utf-8");
+
+        const idStr = `id: ${id},`;
+        let idxOfId = content.indexOf(idStr);
+        if (idxOfId === -1) {
+            // Also check for string IDs just in case
+            idxOfId = content.indexOf(`id: "${id}",`);
+        }
+
+        if (idxOfId === -1) {
+            return NextResponse.json({ error: "Member not found" }, { status: 404 });
+        }
+
+        const objStart = content.lastIndexOf("    {", idxOfId);
+        const objEnd = content.indexOf("    },", idxOfId) + 7;
+
+        if (objStart !== -1 && objEnd > objStart) {
+            content = content.slice(0, objStart) + content.slice(objEnd);
+            await writeFile(filePath, content, "utf-8");
+        }
+
+        return NextResponse.json({ success: true });
+    } catch (err) {
+        console.error("Members DELETE error:", err);
         return NextResponse.json({ error: String(err) }, { status: 500 });
     }
 }

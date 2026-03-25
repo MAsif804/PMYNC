@@ -71,7 +71,7 @@ export default function ThematicAreas() {
                         {themes.map((theme, i) => (
                             <div
                                 key={i}
-                                className={`bg-white rounded-2xl p-4 flex flex-col gap-3 transition-all duration-300 hover:shadow-md
+                                className={`bg-white rounded-2xl p-4 flex flex-col gap-3 transition-all duration-300 hover:shadow-md hover:border-2 hover:border-[#088E48]
                                     ${theme.active
                                         ? "border-2 border-[#088E48] shadow-sm"
                                         : "border border-gray-100 shadow-sm"

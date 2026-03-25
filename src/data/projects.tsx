@@ -19,6 +19,7 @@ export type Project = {
     detailImages: string[];
     categories: string[];
     linkedHappenings?: string[];
+    linkedMembers?: string[];
 };
 
 const defaultDetailImages = [
@@ -146,28 +147,6 @@ export const projects: Project[] = [
         categories: ["projects"],
     },
     {
-        slug: "leadership-development-program",
-        title: "Leadership Development Program: Building Future Leaders Through Intensive Training",
-        dateStart: "Nov, 2025",
-        dateEnd: "Dec, 2025",
-        thumbnail: "/nyc-project/nyc-project-2.jpg",
-        shortDescription: "An intensive program designed to build leadership capacity among young council members with focus on governance, project management and, and......",
-        beneficiaries: "2500+",
-        avatars: [
-            "https://i.pravatar.cc/32?img=4",
-            "https://i.pravatar.cc/32?img=5",
-            "https://i.pravatar.cc/32?img=6",
-        ],
-        images: defaultDetailImages,
-        description: getDefaultDescription(),
-        fullDescription: defaultFullDescription,
-        objectives: defaultObjectives,
-        impacts: defaultImpacts,
-        locations: defaultLocations,
-        detailImages: defaultDetailImages,
-        categories: ["projects"],
-    },
-    {
         slug: "innovation-challenge-2026",
         title: "Innovation Challenge 2026: National Competition Showcasing Creative Solutions",
         dateStart: "Nov, 2025",
@@ -232,6 +211,42 @@ export const projects: Project[] = [
         locations: defaultLocations,
         detailImages: defaultDetailImages,
         categories: ["projects"],
+    },
+    {
+        slug: "leadership-development-program",
+        title: "Leadership Development Program: Building Future Leaders Through Intensive Training",
+        dateStart: "Nov, 2025",
+        dateEnd: "Dec, 2025",
+        thumbnail: "/nyc-project/1774435824988.jpg",
+        shortDescription: "An intensive program designed to build leadership capacity among young council members with focus on governance, project management and, and......",
+        beneficiaries: "2500+",
+        avatars: [],
+        images: ["/nyc-project/1774435789610.jpg", "/nyc-project/1774435816020.jpg"],
+        description: getDefaultDescription(),
+        fullDescription: defaultFullDescription,
+        objectives: [
+            "Develop critical thinking and decision-making skills among youth leaders",
+            "Develop critical thinking and decision-making skills among youth leaders",
+            "Develop critical thinking and decision-making skills among youth leaders",
+            "Develop critical thinking and decision-making skills among youth leaders",
+            "Develop critical thinking and decision-making skills among youth leaders",
+            "Develop critical thinking and decision-making skills among youth leaders",
+            "Develop critical thinking and decision-making skills among youth leaders"
+        ],
+        impacts: [
+            "Develop critical thinking and decision-making skills among youth leaders",
+            "Develop critical thinking and decision-making skills among youth leaders",
+            "Develop critical thinking and decision-making skills among youth leaders",
+            "Develop critical thinking and decision-making skills among youth leaders",
+            "Develop critical thinking and decision-making skills among youth leaders",
+            "Develop critical thinking and decision-making skills among youth leaders",
+            "Develop critical thinking and decision-making skills among youth leaders"
+        ],
+        locations: ["Islamabad"],
+        detailImages: ["/nyc-project/1774435789610.jpg", "/nyc-project/1774435816020.jpg"],
+        categories: ["projects"],
+        linkedHappenings: ["digital-skills-bootcamp", "youth-climate-action-summit", "the-2024-scholarship-winners"],
+        linkedMembers: ["zaynab-ul-ghazali", "muhammad-nouman", "fakhar-jabran", "iqra-bisma"],
     },
 ];
 

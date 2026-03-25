@@ -35,12 +35,27 @@ export default function MemberDetailView({ member }: { member: Member }) {
                     
                     <div className="w-full lg:w-[253px] shrink-0">
                         <div className="border border-[#FCFCFC] rounded-[16px] bg-[#FEFEFE] p-4 flex flex-col items-center justify-end gap-4">
-
+                            <div className="flex justify-between w-full">
+                            {/* Type badges */}
+                            <div className="flex flex-wrap gap-2 items-center justify-center">
+                                {member.type.map((t, i) => (
+                                    <span
+                                        key={i}
+                                        className="text-[12px] font-medium px-2.5 py-0.5 rounded-full capitalize font-Roboto"
+                                        style={{
+                                            background: i % 2 === 0 ? "#DCFCE7" : "#DBEAFE",
+                                            color: i % 2 === 0 ? "#166534" : "#1D4ED8",
+                                        }}
+                                    >
+                                        {t.charAt(0).toUpperCase() + t.slice(1)}
+                                    </span>
+                                ))}
+                            </div>
                             {/* Period */}
                             <span className="px-2.5 py-1 bg-[#F5F5F5] rounded-full self-end text-[14px] font-Roboto font-normal text-[#333333]  text-end">
                                 {member.period}
                             </span>
-
+                            </div>
                             {/* Photo */}
                             <div className="w-auto h-[221px] rounded-full overflow-hidden border border-[#088E48] shadow">
                                 <img
@@ -55,9 +70,8 @@ export default function MemberDetailView({ member }: { member: Member }) {
                                 {member.name}
                             </h1>
 
-                            {/* Type badges */}
-                            <div className="flex flex-wrap gap-2 justify-center">
-                                {member.type.map((t, i) => (
+                            <div className="flex flex-wrap gap-2 items-center justify-center">
+                                {(member.designation || []).map((t, i) => (
                                     <span
                                         key={i}
                                         className="text-[12px] font-medium px-2.5 py-0.5 rounded-full capitalize font-Roboto"

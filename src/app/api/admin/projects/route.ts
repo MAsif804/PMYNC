@@ -18,6 +18,8 @@ export async function GET() {
             objectives: p.objectives,
             impacts: p.impacts,
             categories: p.categories,
+            linkedHappenings: p.linkedHappenings ?? [],
+            linkedMembers: p.linkedMembers ?? [],
         }));
         return NextResponse.json(safe);
     } catch {
@@ -37,6 +39,7 @@ export async function POST(request: NextRequest) {
         const impacts = (p.impacts || []) as string[];
         const categories = (p.categories || ["projects"]) as string[];
         const linkedHappenings = (p.linkedHappenings || []) as string[];
+        const linkedMembers = (p.linkedMembers || []) as string[];
         const dImgs = (p.detailImages && p.detailImages.length > 0) ? p.detailImages : [];
         const imagesStr = dImgs.length > 0 ? `[${dImgs.map((img: string) => `"${img}"`).join(", ")}]` : `defaultDetailImages`;
         const slug = p.slug || p.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -63,6 +66,7 @@ ${impacts.map((i: string) => `            "${i.replace(/"/g, "'")}"`).join(",\n"
         detailImages: ${imagesStr},
         categories: [${categories.map((c: string) => `"${c}"`).join(", ")}],
         linkedHappenings: [${linkedHappenings.map((h: string) => `"${h}"`).join(", ")}],
+        linkedMembers: [${linkedMembers.map((m: string) => `"${m}"`).join(", ")}],
     },`;
 
         const insertIdx = content.lastIndexOf("];");

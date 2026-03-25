@@ -143,7 +143,7 @@ function TeamCard({ leader }: { leader: Leader }) {
                 <div className="mb-2">
                     <span className="block text-[14px] text-[#90A1B9] mb-1 font-normal">Designations</span>
                     <div className="inline-flex items-center rounded-md bg-[#E6FFE6] px-2 py-[2px]">
-                        <span className="text-[12px] font-Roboto font-normal text-[#088E48]">{leader.designation}</span>
+                        <span className="text-[12px] font-Roboto font-normal text-[#088E48]">{(leader.designation || []).join(", ")}</span>
                     </div>
                 </div>
 

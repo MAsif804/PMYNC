@@ -11,9 +11,23 @@ import { ArrowUpRight, CalendarClock, UsersRound } from "lucide-react";
 import Link from "next/link";
 
 import { Project, projects } from "@/data/projects";
+import { allMembers } from "@/data/members";
 
 function ProjectCard({ project }: { project: Project }) {
     const short = project.shortDescription.replace(/\.{3}$/, "");
+
+    // Get avatar URLs from linkedMembers (if any), otherwise fallback to the avatars array
+    const displayMembers = project.linkedMembers?.length
+        ? project.linkedMembers.map(slug => {
+            const member = allMembers.find(m => m.slug === slug);
+            return member ? { url: member.image, name: member.name } : null;
+        }).filter(Boolean) as { url: string, name: string }[]
+        : (project.avatars || []).map((url, i) => ({ url, name: `Member ${i + 1}` }));
+
+    const visibleMembers = displayMembers.slice(0, 3);
+    const hiddenMembers = displayMembers.slice(3);
+    const hiddenCount = hiddenMembers.length;
+    const hiddenNames = hiddenMembers.map(m => m.name).join(", ");
 
     return (
         <div className="flex flex-col flex-1 p-4 gap-2">
@@ -42,17 +56,23 @@ function ProjectCard({ project }: { project: Project }) {
                     </div>
                 </div>
                 <div className="flex -space-x-2">
-                    {project.avatars.map((av, i) => (
+                    {visibleMembers.map((m, i) => (
                         <img
                             key={i}
-                            src={av}
-                            alt="member"
-                            className="w-9 h-9 rounded-full border-2 border-white object-cover"
+                            src={m.url}
+                            alt={m.name}
+                            title={m.name}
+                            className="w-9 h-9 rounded-full border-2 border-white object-cover relative hover:z-10 transition-transform hover:scale-110 cursor-pointer"
                         />
                     ))}
-                    <div className="w-9 h-9 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center">
-                        <span className="text-[12px] font-bold text-[#7C7F82]">+2</span>
-                    </div>
+                    {hiddenCount > 0 && (
+                        <div 
+                            title={hiddenNames}
+                            className="w-9 h-9 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center relative hover:z-10 cursor-help"
+                        >
+                            <span className="text-[12px] font-bold text-[#7C7F82]">+{hiddenCount}</span>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -112,7 +132,7 @@ export default function Projects() {
                         </p>
                     </div>
                     <a
-                        href="#"
+                        href="/projects"
                         className="flex items-center gap-1 text-white font-semibold text-sm hover:text-green-400 text-center sm:text-left transition-colors whitespace-nowrap mt-1"
                     >
                         Show all projects <ArrowUpRight className="h-4 w-4" />

@@ -4,7 +4,7 @@ export type Member = {
     name: string;
     location: string;
     province: string;
-    designation: string;
+    designation: string[];
     sectors: string[];
     description: string;
     socials: {
@@ -28,7 +28,7 @@ export const allMembers: Member[] = [
         name: "Zaynab Ul Ghazali",
         location: "Islamabad",
         province: "Islamabad",
-        designation: "Patron-in-Chief",
+        designation: ["Patron-in-Chief"],
         sectors: [
             "Policy Development",
             "Governance & Public Administration"
@@ -38,7 +38,7 @@ export const allMembers: Member[] = [
         image: "/members/zaynab-ui-ghazali.jpg",
         period: "2023 - present",
         yearStart: "2023",
-        type: ["leadership", "member"],
+        type: ["leadership"],
         slug: "zaynab-ul-ghazali",
         socials: { email: "zaynabulghazali@gmail.com",},
         achievements: [
@@ -58,14 +58,14 @@ export const allMembers: Member[] = [
         name: "Muhammad Nouman",
         location: "Peshawar, Khyber Pakhtunkhwa",
         province: "Khyber Pakhtunkhwa",
-        designation: "Chairperson",
+        designation: ["Chairperson"],
         sectors: ["Policy Development", "Youth Engagement"],
         description:
             "My name is Muhammad Nouman from Khyber pakhtunkhwa Peshawar Pakistan, a dedicated lawyer and advocate for special persons' rights, serves as a member of the Prime Minister's National Youth Council Pakistan, focusing on policy-making and special persons' initiatives. I am also a member of the Commonwealth Students Association and Focal Person for Disabled Persons in KP, driving positive change and inclusivity.",
         image: "/members/muhammad-nouman.jpg",
         period: "2023 - present",
         yearStart: "2023",
-        type: ["leadership", "member"],
+        type: [ "member"],
         slug: "muhammad-nouman",
         socials: { email: "mn247682@gmail.com",},
         achievements: [
@@ -84,7 +84,7 @@ export const allMembers: Member[] = [
         name: "Malik Faisal Ayub Khokhar",
         location: "Lahore, Punjab",
         province: "Punjab",
-        designation: "Minister for Youth Affairs",
+        designation: ["Minister for Youth Affairs"],
         sectors: ["Youth Leadership", "Civic Engagement"],
         description:
             "Malik Faisal Ayub Khokhar is the Minister for Youth Affairs, leading initiatives for youth development and engagement at the national level. He focuses on creating pathways for young Pakistanis to participate in governance and policy-making.",
@@ -105,7 +105,7 @@ export const allMembers: Member[] = [
         name: "Fakhar Jabran",
         location: "Bhimber, AJK",
         province: "AJK",
-        designation: "Member",
+        designation: ["Member"],
         sectors: ["Digital Skills", "Entrepreneurship"],
         description:
             "A passionate entrepreneur and innovator, Fakhar Jabran is the founder of 4 successful startups and a Winner of the PM National Innovation Award. He started Connect, a platform bridging the digital divide in AJK, and continues to champion tech entrepreneurship among young Pakistanis.",
@@ -126,7 +126,7 @@ export const allMembers: Member[] = [
         name: "Iqra Bisma",
         location: "Rawlakot, AJK",
         province: "AJK",
-        designation: "Member",
+        designation: ["Member"],
         sectors: ["Digital Skills", "Entrepreneurship"],
         description:
             "A passionate advocate for health and wellbeing, Iqra Bisma is a proud recipient of the prestigious The Diana Award — one of the highest recognitions a young person can receive for social action and humanitarian efforts. Her journey reflects resilience, leadership, and a deep commitment to empowering communities, particularly young people and women across Pakistan. She has also had the honor of representing Pakistan in the Summer Sisters Exchange Program, where she served as a youth ambassador, promoting cross-cultural dialogue, leadership development, and global collaboration.",
@@ -147,7 +147,7 @@ export const allMembers: Member[] = [
         name: "Fahad Shahbaz",
         location: "Rawlakot, AJK",
         province: "AJK",
-        designation: "Entrepreneur",
+        designation: ["Entrepreneur"],
         sectors: ["Digital Skills", "Entrepreneurship"],
         description:
             "A youth representative from Balochistan dedicated to advancing climate resilience, empowering local communities, and bridging gaps between grassroots initiatives and national policy. Fahad brings a unique perspective on environmental challenges facing Pakistan's youth.",
@@ -168,7 +168,7 @@ export const allMembers: Member[] = [
         name: "Sara Ahmed",
         location: "Karachi, Sindh",
         province: "Sindh",
-        designation: "Alumni",
+        designation:  ["Alumni"],
         sectors: ["Education", "Civic Engagement"],
         description:
             "Sara Ahmed is a former NYC member who has since founded a non-profit focused on girls' education in Sindh. Her work has impacted thousands of young women across rural Sindh, providing access to quality education and vocational training.",
@@ -188,7 +188,7 @@ export const allMembers: Member[] = [
         name: "Bilal Tanveer",
         location: "Peshawar, KPK",
         province: "KPK",
-        designation: "Alumni",
+        designation: ["Alumni"],
         sectors: ["Technology", "Youth Leadership"],
         description:
             "Bilal Tanveer is a tech entrepreneur who leveraged his NYC experience to build a platform connecting rural youth with digital opportunities. His work in KPK has created hundreds of tech jobs and training programs for young people in underserved areas.",
@@ -208,7 +208,7 @@ export const allMembers: Member[] = [
         name: "Fatima Malik",
         location: "Quetta, Balochistan",
         province: "Balochistan",
-        designation: "Alumni",
+        designation: ["Alumni"],
         sectors: ["Health", "Policy Development"],
         description:
             "Fatima Malik worked on health policy advocacy during her tenure and continues to drive policy change from Balochistan. She focuses on maternal and child health, nutritional policy, and building healthcare access in remote areas of Balochistan.",
@@ -228,7 +228,7 @@ export const allMembers: Member[] = [
         name: "Hassan Ashraf",
         location: "Faisalabad",
         province: "Punjab",
-        designation: " Member",
+        designation: ["Member"],
         sectors: [],
         description: "I'm Hassan  Member of NYC From Faisalabad, Pakistan. I have done Masters in journalism. I'm the co-Founder of a company named The Platform which is a coworking space. I'm also the Founder & CEO of Umeed foundation. Its a non-profitable organisation.  Through This foundation we educate child labourers and slums children free of cost all across Pakistan. We teach these children by going into there slums and underprivileged areas and by making small schools inside there slums so they can trust us easily and start getting education. My basic Aim is to give all underprivileged children a way & a platform to educate themselves where they can build their own future like other normal children. Alhamdulillah till now we have educated more than 2000 deserving children across Pakistan free of cost. We have currently 7 schools in 4 cities of Pakistan. Umeed will one day educate millions of children free of cost! Thats my dream  I have also recently won one of the world's most prestigious Humanitarian award. The Diana Award UK in 2021. I have also received several awards in Pakistan from Pakistan Government i.e Pride of Country, Hamary Heroes. Apart from all of this my hobby is to learn about new cultures and to meet new people. I love traveling around the world. I have traveled to many countries and attended many conferences and youth summits in different parts of the world and also won different awards there as well. ",
         image: "/members/1772780194213.jpeg",
@@ -239,6 +239,7 @@ export const allMembers: Member[] = [
         socials: { email: "hassan03326760556@gmail.com" },
         achievements: [],
     },
+
 ];
 
 // ─── Helper ───────────────────────────────────────────────────────────────────

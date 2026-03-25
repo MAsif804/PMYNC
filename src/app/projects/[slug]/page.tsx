@@ -28,7 +28,7 @@ export default async function ProjectDetailPage({ params }: { params: { slug: st
             <ProjectDetails project={project} />
             {/* The rest remain static for now per instructions, or pass project down if needed later */}
             <ProjectHappenings />
-            <ProjectTeam />
+            <ProjectTeam linkedMembers={project.linkedMembers} />
             <ProjectJoinCTA />
             <Footer />
         </main>

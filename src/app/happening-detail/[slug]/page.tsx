@@ -25,7 +25,7 @@ export default async function HappeningDetailPage({ params }: { params: { slug: 
             <Navbar />
             <HappeningHero happening={happening} />
             <HappeningDetails happening={happening} />
-            <HappeningTeam />
+            <HappeningTeam happening={happening} />
             <Footer />
         </main>
     );

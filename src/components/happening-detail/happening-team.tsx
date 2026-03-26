@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowUpRight, Linkedin, Twitter, Globe, Link as LinkIcon, ChevronLeft, ChevronRight, MapPin, Phone } from "lucide-react";
+import { Linkedin, MapPin, Phone, } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
     Carousel,
     CarouselContent,
@@ -9,72 +9,11 @@ import {
     CarouselNext,
     CarouselPrevious,
 } from "@/components/ui/carousel";
+import { Happening } from "@/data/happenings";
+import { allMembers, Member } from "@/data/members";
 import Link from "next/link";
 
-type Leader = {
-    id: number;
-    name: string;
-    designation: string[];
-    location: string;
-    description: string;
-    image: string;
-    period: string;
-    sectors: string[];
-    socials: {
-        linkedin?: string;
-        email?: string;
-        phone?: string;
-    };
-};
-
-const leaders: Leader[] = [
-    {
-        id: 1,
-        name: "Fakhar Jabran",
-        designation: ["Member", "Entrepreneur"],
-        location: "Bhimber, KPK",
-        description: "Entrepreneurship/ Founder of 4 startups. Winner  of PM National Innovation Award. Started  Connect and strategic policy making to empower young leaders.",
-        image: "/meet-the-team/team-member-1.png", // Reusing available profile images
-        period: "2023 - present",
-        sectors: ["Digital Skills", "Entrepreneurship"],
-        socials: { linkedin: "#", email: "#", phone: "#" },
-    },
-    {
-        id: 2,
-        name: "Ayesha Malik",
-        designation: ["Member", "Entrepreneur"],
-        location: "Rawlakot, KPK",
-        description: "Health & wellbeing/ Diana Award winner,  Represented Pakistan in Summer Sisters exchange  program.",
-        image: "/meet-the-team/team-member-2.jpg",
-        period: "2023 - present",
-        sectors: ["Health & Wellbeing", "Education"],
-        socials: {},
-    },
-    {
-        id: 3,
-        name: "Rana Mashhood",
-        designation: ["Member", "Entrepreneur"],
-        location: "Rawlakot, KPK",
-        description: "A youth representative from Balochistan dedicated to advancing climate resilience, empowering local communities, and fostering sustainable development. ",
-        image: "/meet-the-team/team-member-3.jpg",
-        period: "2022 - present",
-        sectors: ["Climate Change", "Education"],
-        socials: { linkedin: "#", email: "#", phone: "#" },
-    },
-    {
-        id: 4,
-        name: "Malik Faisal",
-        designation: ["Member", "Entrepreneur"],
-        location: "Rawlakot, KPK",
-        description: "Malik Faisal Ayub Khokhar is the minister for Youth Affairs, leading ini...",
-        image: "/meet-the-team/team-member-4.png",
-        period: "2022 - present",
-        sectors: ["Education", "Environment"],
-        socials: { linkedin: "#", email: "#" },
-    },
-];
-
-function TeamCard({ leader }: { leader: Leader }) {
+function TeamCard({ leader }: { leader: Member }) {
 
     return (
         <div className="bg-white rounded-[12px] p-4 shadow-sm border border-[#E7E7E7] hover:shadow-lg transition-all duration-300 flex flex-col h-full group">
@@ -160,21 +99,42 @@ function TeamCard({ leader }: { leader: Leader }) {
                 </div>
 
                 {/* Description */}
-                <p className="text-[14px] font-Roboto font-normal text-[#808080] leading-[1.6]">
-                    {leader.description}{" "}
-                    <Link href="#" className="text-[#0066FF] underline decoration-[#0066FF]/50 underline-offset-2 hover:decoration-[#0066FF] font-medium inline-block">
-                        Read more
-                    </Link>
-                </p>
+                <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <p className="text-[14px] font-Roboto font-normal text-[#808080] leading-[1.6]">
+                                {leader.description.length > 95 ? leader.description.slice(0, 95).trim() + "... " : leader.description + " "}
+                                {leader.description.length > 95 && (
+                                    <Link href={`/members/${leader.slug}`} className="text-[#0066FF] hover:underline font-medium cursor-pointer">Read more</Link>
+                                )}
+                            </p>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[300px] bg-white border shadow-lg z-[100] px-3 py-2">
+                            <p className="text-sm font-Roboto text-gray-700 leading-relaxed">{leader.description}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </div>
         </div>
     );
 }
 
 
-export default function HappeningTeam() {
+export default function HappeningTeam({ happening }: { happening: Happening }) {
+    if (!happening.linkedMembers || happening.linkedMembers.length === 0) {
+        return null;
+    }
+
+    const linkedLeaders = happening.linkedMembers
+        .map(slug => allMembers.find(m => m.slug === slug))
+        .filter((m): m is Member => m !== undefined);
+
+    if (linkedLeaders.length === 0) {
+        return null;
+    }
+
     return (
-        <section className="py-16 bg-white">
+        <section className="py-16 bg-white shrink-0">
             <div className="container relative">
                 {/* Header */}
                 <div className="flex flex-col items-center text-center mb-10 relative">
@@ -196,7 +156,7 @@ export default function HappeningTeam() {
                         </div>
 
                         <CarouselContent className="-ml-5">
-                            {leaders.map((leader) => (
+                            {linkedLeaders.map((leader) => (
                                 <CarouselItem key={leader.id} className="pl-5 md:basis-1/2 lg:basis-1/3">
                                     <TeamCard leader={leader} />
                                 </CarouselItem>

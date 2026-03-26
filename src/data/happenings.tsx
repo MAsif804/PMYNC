@@ -25,6 +25,7 @@ export type Happening = {
     locations: string[];
     detailImages: string[];
     categories: string[];
+    linkedMembers?: string[];
 };
 
 const defaultDetailImages = [
@@ -289,36 +290,36 @@ export const happenings: Happening[] = [
         categories: ["projects"],
         type: ["events","All"],
     },
+
     {
-        slug: "rural-youth-development-initiative",
+        slug: "rural-youth-development-initiative-bridging-urban-rural-gap-through-education",
         title: "Rural Youth Development Initiative: Bridging Urban-Rural Gap Through Education",
-        dateStart: "Nov, 2025",
-        dateEnd: "Dec, 2025",
-        thumbnail: "/nyc-happening/happening-8.png",
+        dateStart: "2026-03-30",
+        dateEnd: "2026-03-31",
+        thumbnail: "/nyc-happening/1774505431332.png",
         shortDescription: "Annual gathering of young leaders from across Pakistan to discuss policy development, innovation, and youth empowerment strategies Annual gathering of y...",
-        beneficiaries: "2500+",
+        beneficiaries: "2500",
         badge: "UpComing",
-        date: "Sunday, March 17, 9:00 AM",
+        date: "",
         location: "Convention center, Islamabad, Pakistan",
         category: "Technology",
-        attendees: "150+ Attendees",
-        author: "",
-        avatars: [
-            "https://i.pravatar.cc/32?img=1",
-            "https://i.pravatar.cc/32?img=2",
-            "https://i.pravatar.cc/32?img=3",
-        ],
-        images: defaultDetailImages,
+        attendees: "",
+        avatars: [],
+        images: ["/nyc-happening/1774505400400.jpg", "/nyc-happening/1774505405764.jpg"],
         description: getDefaultDescription(),
         fullDescription: defaultFullDescription,
-        objectives: defaultObjectives,
-        impacts: defaultImpacts,
-        locations: defaultLocations,
-        detailImages: defaultDetailImages,
+        objectives: [
+            ""
+        ],
+        impacts: [
+            ""
+        ],
+        locations: ["Islamabad"],
+        detailImages: ["/nyc-happening/1774505400400.jpg", "/nyc-happening/1774505405764.jpg"],
         categories: ["projects"],
-        type: ["events","All"],
+        type: ["events", "All"],
+        linkedMembers:["zaynab-ul-ghazali", "muhammad-nouman", "fakhar-jabran", "iqra-bisma"],
     },
-
 ];
 
 export function getHappeningBySlug(slug: string): Happening | undefined {

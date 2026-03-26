@@ -14,10 +14,22 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination";
+import { url } from "inspector/promises";
+import { allMembers } from "@/data/members";
 
 function HappeningCard({ item }: { item: Happening }) {
     const short = item.shortDescription.replace(/\.{3}$/, "");
 
+    const displayMembers = item.linkedMembers?.length
+        ? item.linkedMembers.map(slug => {
+            const member = allMembers.find(m => m.slug === slug);
+            return member ? { url: member.image, name: member.name } : null;
+        }).filter(Boolean) as { url: string, name: string }[]
+        : (item.avatars || []).map((url, i) => ({ url, name: `Member ${i + 1}` }));
+    const visibleMembers = displayMembers.slice(0, 3);
+    const hiddenMembers = displayMembers.slice(3);
+    const hiddenCount = hiddenMembers.length;
+    const hiddenNames = hiddenMembers.map(m => m.name).join(", ");
     return (
         <div className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col group">
             {/* Image */}
@@ -91,14 +103,25 @@ function HappeningCard({ item }: { item: Happening }) {
                                     <span className="text-[12px] text-[#6A7282]">{item.attendees}</span>
                                 </div>
                             )}
-                            {item.avatars.length > 0 && (
-                                <div className="flex -space-x-1.5">
-                                    {item.avatars.map((av, i) => (
-                                        <img key={i} src={av} alt="attendee" className="w-9 h-9 rounded-full border-2 border-white object-cover" />
+                            {item.linkedMembers && (
+                                <div className="flex -space-x-2">
+                                    {visibleMembers.map((m, i) => (
+                                        <img
+                                            key={i}
+                                            src={m.url}
+                                            alt={m.name}
+                                            title={m.name}
+                                            className="w-9 h-9 rounded-full border-2 border-white object-cover relative hover:z-10 transition-transform hover:scale-110 cursor-pointer"
+                                        />
                                     ))}
-                                    <div className="w-9 h-9 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center">
-                                        <span className="text-[12px] font-bold text-gray-600">+2</span>
-                                    </div>
+                                    {hiddenCount > 0 && (
+                                        <div
+                                            title={hiddenNames}
+                                            className="w-9 h-9 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center relative hover:z-10 cursor-help"
+                                        >
+                                            <span className="text-[12px] font-bold text-[#7C7F82]">+{hiddenCount}</span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

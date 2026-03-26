@@ -8,7 +8,7 @@ type DrawerMode = "member" | "project" | "event" | null;
 
 interface MemberData { id: number; name: string; location: string; province: string; designation: string[]; sectors: string[]; description: string; image: string; period: string; yearStart: string; type: string[]; slug: string; socials: { email?: string; linkedin?: string; phone?: string }; achievements: { title: string; description: string }[]; }
 interface ProjectData { slug: string; title: string; dateStart: string; dateEnd: string; thumbnail: string; shortDescription: string; beneficiaries: string; locations: string[]; objectives: string[]; impacts: string[]; categories: string[]; linkedHappenings?: string[]; linkedMembers?: string[]; detailImages?: string[]; }
-interface EventData { slug: string; title: string; dateStart: string; dateEnd: string; thumbnail: string; shortDescription: string; beneficiaries: string; badge: string; date: string; location: string; category: string; attendees: string; author: string; locations: string[]; objectives: string[]; impacts: string[]; categories: string[]; type?: string[]; detailImages?: string[]; }
+interface EventData { slug: string; title: string; dateStart: string; dateEnd: string; thumbnail: string; shortDescription: string; beneficiaries: string; badge: string; date: string; location: string; category: string; attendees: string; author: string; locations: string[]; objectives: string[]; impacts: string[]; categories: string[]; type?: string[]; detailImages?: string[]; happeningType: "Event" | "Blog" | "News"; eventMode: "Onsite" | "Online"; venue: string; fullAddress: string; meetingLink: string; eventTime: string; email: string; phone: string; website: string; linkedMembers: string[]; fullContent: string; datePublished: string; }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const slugify = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -207,6 +207,7 @@ export default function CpanelPage() {
     const [isFormSectorOpen, setIsFormSectorOpen] = useState(false);
     const [isLinkedHappeningsOpen, setIsLinkedHappeningsOpen] = useState(false);
     const [isLinkedMembersOpen, setIsLinkedMembersOpen] = useState(false);
+    const [isLinkedEventMembersOpen, setIsLinkedEventMembersOpen] = useState(false);
 
     const [eventSearch, setEventSearch] = useState("");
     const [eventDateFilter, setEventDateFilter] = useState("");
@@ -220,7 +221,7 @@ export default function CpanelPage() {
     const defProject: ProjectData = { slug: "", title: "", dateStart: "", dateEnd: "", thumbnail: "", shortDescription: "", beneficiaries: "", locations: ["Islamabad"], objectives: [""], impacts: [""], categories: ["projects"], linkedHappenings: [], linkedMembers: [], detailImages: [] };
     const [pf, setPf] = useState<ProjectData>(defProject);
     // Event form
-    const defEvent: EventData = { slug: "", title: "", dateStart: "", dateEnd: "", thumbnail: "", shortDescription: "", beneficiaries: "", badge: "", date: "", location: "", category: "", attendees: "", author: "", locations: ["Islamabad"], objectives: [""], impacts: [""], categories: ["projects"], type: ["All"], detailImages: [] };
+    const defEvent: EventData = { slug: "", title: "", dateStart: "", dateEnd: "", thumbnail: "", shortDescription: "", beneficiaries: "", badge: "", date: "", location: "", category: "", attendees: "", author: "", locations: ["Islamabad"], objectives: [""], impacts: [""], categories: ["projects"], type: ["All"], detailImages: [], happeningType: "Event", eventMode: "Onsite", venue: "", fullAddress: "", meetingLink: "", eventTime: "", email: "", phone: "", website: "", linkedMembers: [], fullContent: "", datePublished: "" };
     const [ef, setEf] = useState<EventData>(defEvent);
 
     const showToast = (type: "success" | "error", message: string) => setToast({ type, message });
@@ -266,12 +267,22 @@ export default function CpanelPage() {
     const saveEvent = async () => {
         if (!ef.title.trim()) { showToast("error", "Title is required"); return; }
         setSaving(true);
-        const payload = { ...ef, slug: ef.slug || slugify(ef.title) };
+        // Auto-compute badge for Event type based on start date
+        let autoBadge = ef.badge;
+        if (ef.happeningType === "Event" && ef.dateStart) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const start = new Date(ef.dateStart);
+            autoBadge = !isNaN(start.getTime()) && start > today ? "UpComing" : "";
+        }
+        // Set type array based on happeningType
+        const typeMap: Record<string, string[]> = { Event: ["events", "All"], Blog: ["blog", "All"], News: ["news", "All"] };
+        const payload = { ...ef, slug: ef.slug || slugify(ef.title), badge: autoBadge, type: typeMap[ef.happeningType] || ["All"] };
         const res = await fetch("/api/admin/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
         const data = await res.json();
         setSaving(false);
-        if (data.success) { showToast("success", `Event "${ef.title}" added!`); closeDrawer(); fetchAll(); }
-        else showToast("error", data.error || "Failed to save event");
+        if (data.success) { showToast("success", `${ef.happeningType} "${ef.title}" added!`); closeDrawer(); fetchAll(); }
+        else showToast("error", data.error || "Failed to save happening");
     };
 
     const deleteMember = async (id: number) => {
@@ -895,28 +906,186 @@ export default function CpanelPage() {
                                 </>
                             )}
 
-                            {/* EVENT FORM */}
+                            {/* EVENT / HAPPENING FORM */}
                             {drawer === "event" && (
                                 <>
-                                    <ImageUpload folder="nyc-happening" onUploaded={(url) => setEf((f) => ({ ...f, thumbnail: url }))} currentUrl={ef.thumbnail} />
-                                    <div><label className="text-xs font-medium text-gray-600 mb-1 block">Event Title *</label><input className={ic} placeholder="Youth Leadership Workshop" value={ef.title} onChange={(e) => setEf((f) => ({ ...f, title: e.target.value, slug: slugify(e.target.value) }))} /></div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div><label className="text-xs font-medium text-gray-600 mb-1 block">Badge</label><select className={sel} value={ef.badge} onChange={(e) => setEf((f) => ({ ...f, badge: e.target.value }))}><option value="">None</option>{["UpComing", "Story", "Blog"].map((b) => <option key={b} value={b}>{b}</option>)}</select></div>
-                                        <div><label className="text-xs font-medium text-gray-600 mb-1 block">Category</label><select className={sel} value={ef.category} onChange={(e) => setEf((f) => ({ ...f, category: e.target.value }))}><option value="">Select</option>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
-                                        <div><label className="text-xs font-medium text-gray-600 mb-1 block">Start Date</label><input className={ic} placeholder="Nov, 2025" value={ef.dateStart} onChange={(e) => setEf((f) => ({ ...f, dateStart: e.target.value }))} /></div>
-                                        <div><label className="text-xs font-medium text-gray-600 mb-1 block">End Date</label><input className={ic} placeholder="Dec, 2025" value={ef.dateEnd} onChange={(e) => setEf((f) => ({ ...f, dateEnd: e.target.value }))} /></div>
-                                        <div><label className="text-xs font-medium text-gray-600 mb-1 block">Attendees</label><input className={ic} placeholder="150+" value={ef.attendees} onChange={(e) => setEf((f) => ({ ...f, attendees: e.target.value }))} /></div>
-                                        <div><label className="text-xs font-medium text-gray-600 mb-1 block">Beneficiaries</label><input className={ic} placeholder="2500+" value={ef.beneficiaries} onChange={(e) => setEf((f) => ({ ...f, beneficiaries: e.target.value }))} /></div>
+                                    {/* ── Step 1: Happening Type ── */}
+                                    <div>
+                                        <label className="text-xs font-semibold text-gray-700 mb-1 block">Happening Type *</label>
+                                        <select
+                                            className={sel}
+                                            value={ef.happeningType}
+                                            onChange={(e) => setEf((f) => ({ ...f, happeningType: e.target.value as EventData["happeningType"] }))}
+                                        >
+                                            <option value="Event">Event</option>
+                                            <option value="Blog">Blog</option>
+                                            <option value="News">News</option>
+                                        </select>
                                     </div>
-                                    <div><label className="text-xs font-medium text-gray-600 mb-1 block">Venue / Location</label><input className={ic} placeholder="Convention Center, Islamabad" value={ef.location} onChange={(e) => setEf((f) => ({ ...f, location: e.target.value }))} /></div>
-                                    <div><label className="text-xs font-medium text-gray-600 mb-1 block">Event Date & Time</label><input className={ic} placeholder="Sunday, March 17, 9:00 AM" value={ef.date} onChange={(e) => setEf((f) => ({ ...f, date: e.target.value }))} /></div>
-                                    <div><label className="text-xs font-medium text-gray-600 mb-1 block">Author (Blog/Story)</label><input className={ic} placeholder="By Sarah Hafiz" value={ef.author} onChange={(e) => setEf((f) => ({ ...f, author: e.target.value }))} /></div>
-                                    <div><label className="text-xs font-medium text-gray-600 mb-1 block">Short Description</label><textarea className={ta} rows={2} value={ef.shortDescription} onChange={(e) => setEf((f) => ({ ...f, shortDescription: e.target.value }))} /></div>
-                                    <DynList label="Locations" items={ef.locations} placeholder="e.g. Islamabad" onChange={(v) => setEf((f) => ({ ...f, locations: v }))} />
-                                    <DynList label="Key Objectives" items={ef.objectives} placeholder="e.g. Empower youth" onChange={(v) => setEf((f) => ({ ...f, objectives: v }))} />
-                                    <DynList label="Impacts" items={ef.impacts} placeholder="e.g. 500+ attended" onChange={(v) => setEf((f) => ({ ...f, impacts: v }))} />
-                                    <div><label className="text-xs font-medium text-gray-600 mb-1 block">Happening Type (comma separated)</label><input className={ic} placeholder="events, All" value={(ef.type || []).join(", ")} onChange={(e) => setEf((f) => ({ ...f, type: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) }))} /></div>
-                                    <MultiImageUpload folder="nyc-happening" urls={ef.detailImages || []} onChange={(urls) => setEf(f => ({ ...f, detailImages: urls }))} />
+
+                                    {/* ── Divider ── */}
+                                    <div className="border-t border-dashed border-gray-200" />
+
+                                    {/* ══════════════ EVENT FIELDS ══════════════ */}
+                                    {ef.happeningType === "Event" && (
+                                        <>
+                                            <ImageUpload folder="nyc-happening" onUploaded={(url) => setEf((f) => ({ ...f, thumbnail: url }))} currentUrl={ef.thumbnail} />
+                                            <div><label className="text-xs font-medium text-gray-600 mb-1 block">Event Title *</label><input className={ic} placeholder="Youth Leadership Workshop" value={ef.title} onChange={(e) => setEf((f) => ({ ...f, title: e.target.value, slug: slugify(e.target.value) }))} /></div>
+
+                                            {/* Badge — auto info */}
+                                            <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+                                                <svg className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                <p className="text-xs text-blue-600 leading-relaxed"><span className="font-semibold">Badge (auto)</span> — The &quot;Upcoming&quot; badge is automatically applied if the Start Date is in the future. It disappears once the date has passed. No manual input needed.</p>
+                                            </div>
+
+                                            {/* Category */}
+                                            <div><label className="text-xs font-medium text-gray-600 mb-1 block">Category</label><select className={sel} value={ef.category} onChange={(e) => setEf((f) => ({ ...f, category: e.target.value }))}><option value="">Select</option>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+
+                                            {/* Event Mode */}
+                                            <div>
+                                                <label className="text-xs font-medium text-gray-600 mb-1 block">Event Mode</label>
+                                                <div className="flex gap-2">
+                                                    {(["Onsite", "Online"] as const).map((mode) => (
+                                                        <button
+                                                            key={mode}
+                                                            type="button"
+                                                            onClick={() => setEf((f) => ({ ...f, eventMode: mode }))}
+                                                            className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                                                                ef.eventMode === mode
+                                                                    ? "bg-[#088E48] text-white border-[#088E48]"
+                                                                    : "bg-white text-gray-600 border-gray-200 hover:border-[#088E48]"
+                                                            }`}
+                                                        >
+                                                            {mode === "Onsite" ? "📍 Onsite" : "🔗 Online"}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Onsite fields */}
+                                            {ef.eventMode === "Onsite" && (
+                                                <>
+                                                    <div><label className="text-xs font-medium text-gray-600 mb-1 block">Venue / Location</label><input className={ic} placeholder="Convention Center, Islamabad" value={ef.venue} onChange={(e) => setEf((f) => ({ ...f, venue: e.target.value, location: e.target.value }))} /></div>
+                                                    <div><label className="text-xs font-medium text-gray-600 mb-1 block">Full Address <span className="text-gray-400 font-normal">(used for &quot;View on map&quot;)</span></label><input className={ic} placeholder="Pearl Continental Hotel, The Mall Road, Rawalpindi" value={ef.fullAddress} onChange={(e) => setEf((f) => ({ ...f, fullAddress: e.target.value }))} /></div>
+                                                </>
+                                            )}
+
+                                            {/* Online field */}
+                                            {ef.eventMode === "Online" && (
+                                                <div><label className="text-xs font-medium text-gray-600 mb-1 block">Meeting Link</label><input className={ic} placeholder="https://zoom.us/j/..." value={ef.meetingLink} onChange={(e) => setEf((f) => ({ ...f, meetingLink: e.target.value }))} /></div>
+                                            )}
+
+                                            {/* Dates & Time */}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div><label className="text-xs font-medium text-gray-600 mb-1 block">Start Date</label><input className={ic} type="date" value={ef.dateStart} onChange={(e) => setEf((f) => ({ ...f, dateStart: e.target.value }))} /></div>
+                                                <div><label className="text-xs font-medium text-gray-600 mb-1 block">End Date</label><input className={ic} type="date" value={ef.dateEnd} onChange={(e) => setEf((f) => ({ ...f, dateEnd: e.target.value }))} /></div>
+                                            </div>
+                                            <div><label className="text-xs font-medium text-gray-600 mb-1 block">Event Time</label><input className={ic} placeholder="9:00 AM" value={ef.eventTime} onChange={(e) => setEf((f) => ({ ...f, eventTime: e.target.value }))} /></div>
+
+                                            {/* Attendees & Beneficiaries */}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="text-xs font-medium text-gray-600 mb-1 block">Attendees <span className="text-gray-400 font-normal">(auto-counted)</span></label>
+                                                    <input className={ic + " bg-gray-50 cursor-not-allowed"} readOnly placeholder="Auto-counted from registrations" value={ef.attendees} />
+                                                </div>
+                                                <div><label className="text-xs font-medium text-gray-600 mb-1 block">Beneficiaries</label><input className={ic} placeholder="2500+" value={ef.beneficiaries} onChange={(e) => setEf((f) => ({ ...f, beneficiaries: e.target.value }))} /></div>
+                                            </div>
+
+                                            {/* Contact Information */}
+                                            <div className="border-t border-gray-100 pt-3">
+                                                <p className="text-xs font-semibold text-gray-700 mb-2">Contact Information</p>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div><label className="text-xs font-medium text-gray-600 mb-1 block">Email</label><input className={ic} placeholder="info@example.com" value={ef.email} onChange={(e) => setEf((f) => ({ ...f, email: e.target.value }))} /></div>
+                                                    <div><label className="text-xs font-medium text-gray-600 mb-1 block">Phone</label><input className={ic} placeholder="+92 300 0000000" value={ef.phone} onChange={(e) => setEf((f) => ({ ...f, phone: e.target.value }))} /></div>
+                                                    <div className="col-span-2"><label className="text-xs font-medium text-gray-600 mb-1 block">Website</label><input className={ic} placeholder="https://example.com" value={ef.website} onChange={(e) => setEf((f) => ({ ...f, website: e.target.value }))} /></div>
+                                                </div>
+                                            </div>
+
+                                            {/* Linked Members */}
+                                            <div className="relative">
+                                                <label className="text-xs font-medium text-gray-600 mb-1 block">Linked Members</label>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsLinkedEventMembersOpen(o => !o)}
+                                                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 flex items-center justify-between gap-2 hover:border-[#088E48] transition-all"
+                                                >
+                                                    <span className="truncate text-left">
+                                                        {ef.linkedMembers.length === 0 ? <span className="text-gray-400">Select members...</span> : `${ef.linkedMembers.length} selected`}
+                                                    </span>
+                                                    <svg className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${isLinkedEventMembersOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                                </button>
+                                                {ef.linkedMembers.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                                        {ef.linkedMembers.map(slug => {
+                                                            const m = members.find(mb => mb.slug === slug);
+                                                            return (
+                                                                <span key={slug} className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                                                                    {m ? m.name : slug}
+                                                                    <button type="button" onClick={() => setEf(f => ({ ...f, linkedMembers: f.linkedMembers.filter(s => s !== slug) }))} className="ml-0.5 text-blue-500 hover:text-red-500">×</button>
+                                                                </span>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                                {isLinkedEventMembersOpen && (
+                                                    <>
+                                                        <div className="fixed inset-0 z-[50]" onClick={() => setIsLinkedEventMembersOpen(false)} />
+                                                        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg z-[60] py-2 max-h-52 overflow-y-auto">
+                                                            {members.length === 0 && <div className="px-4 py-2 text-sm text-gray-400">No members found</div>}
+                                                            {members.map(m => (
+                                                                <label key={m.slug} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        className="w-4 h-4 text-[#088E48] rounded-sm border-gray-300 focus:ring-[#088E48] shrink-0"
+                                                                        checked={ef.linkedMembers.includes(m.slug)}
+                                                                        onChange={e => {
+                                                                            if (e.target.checked) setEf(f => ({ ...f, linkedMembers: [...f.linkedMembers, m.slug] }));
+                                                                            else setEf(f => ({ ...f, linkedMembers: f.linkedMembers.filter(s => s !== m.slug) }));
+                                                                        }}
+                                                                    />
+                                                                    <div className="flex items-center gap-2">
+                                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                        <img src={m.image} alt={m.name} className="w-6 h-6 rounded-full object-cover bg-gray-100" onError={e => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=088E48&color=fff`; }} />
+                                                                        <span className="text-sm text-gray-700">{m.name}</span>
+                                                                        <span className="text-xs text-gray-400">{(m.designation || []).join(", ")}</span>
+                                                                    </div>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+
+                                            {/* Short Description */}
+                                            <div><label className="text-xs font-medium text-gray-600 mb-1 block">Short Description</label><textarea className={ta} rows={2} value={ef.shortDescription} onChange={(e) => setEf((f) => ({ ...f, shortDescription: e.target.value }))} /></div>
+
+                                            {/* Key Objectives & Impacts */}
+                                            <DynList label="Key Objectives" items={ef.objectives} placeholder="e.g. Empower youth" onChange={(v) => setEf((f) => ({ ...f, objectives: v }))} />
+                                            <DynList label="Impacts" items={ef.impacts} placeholder="e.g. 500+ attended" onChange={(v) => setEf((f) => ({ ...f, impacts: v }))} />
+
+                                            {/* Other Images */}
+                                            <MultiImageUpload folder="nyc-happening" urls={ef.detailImages || []} onChange={(urls) => setEf(f => ({ ...f, detailImages: urls }))} />
+
+                                            {/* Slug */}
+                                            <div><label className="text-xs font-medium text-gray-600 mb-1 block">Slug (auto)</label><input className={ic + " bg-gray-50"} value={ef.slug} onChange={(e) => setEf((f) => ({ ...f, slug: e.target.value }))} /></div>
+                                        </>
+                                    )}
+
+                                    {/* ══════════════ BLOG / NEWS FIELDS ══════════════ */}
+                                    {(ef.happeningType === "Blog" || ef.happeningType === "News") && (
+                                        <>
+                                            <ImageUpload folder="nyc-happening" onUploaded={(url) => setEf((f) => ({ ...f, thumbnail: url }))} currentUrl={ef.thumbnail} />
+                                            <div><label className="text-xs font-medium text-gray-600 mb-1 block">Title *</label><input className={ic} placeholder={ef.happeningType === "Blog" ? "Blog post title..." : "News article title..."} value={ef.title} onChange={(e) => setEf((f) => ({ ...f, title: e.target.value, slug: slugify(e.target.value) }))} /></div>
+                                            <div><label className="text-xs font-medium text-gray-600 mb-1 block">Category</label><select className={sel} value={ef.category} onChange={(e) => setEf((f) => ({ ...f, category: e.target.value }))}><option value="">Select</option>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div><label className="text-xs font-medium text-gray-600 mb-1 block">Author</label><input className={ic} placeholder="By Sarah Hafiz" value={ef.author} onChange={(e) => setEf((f) => ({ ...f, author: e.target.value }))} /></div>
+                                                <div><label className="text-xs font-medium text-gray-600 mb-1 block">Date Published</label><input className={ic} type="date" value={ef.datePublished} onChange={(e) => setEf((f) => ({ ...f, datePublished: e.target.value, dateStart: e.target.value }))} /></div>
+                                            </div>
+                                            <div><label className="text-xs font-medium text-gray-600 mb-1 block">Short Description</label><textarea className={ta} rows={2} placeholder="Brief summary..." value={ef.shortDescription} onChange={(e) => setEf((f) => ({ ...f, shortDescription: e.target.value }))} /></div>
+                                            <div><label className="text-xs font-medium text-gray-600 mb-1 block">Full Content / Body</label><textarea className={ta} rows={6} placeholder="Write the full article content here..." value={ef.fullContent} onChange={(e) => setEf((f) => ({ ...f, fullContent: e.target.value }))} /></div>
+                                            <div><label className="text-xs font-medium text-gray-600 mb-1 block">Slug (auto)</label><input className={ic + " bg-gray-50"} value={ef.slug} onChange={(e) => setEf((f) => ({ ...f, slug: e.target.value }))} /></div>
+                                        </>
+                                    )}
                                 </>
                             )}
                         </div>

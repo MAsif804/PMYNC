@@ -30,7 +30,9 @@ export default function HappeningHero({ happening }: { happening: Happening }) {
                         Plot 1-2, Constitution Avenue, G-5/2,<br />Islamabad, Pakistan
                     </p>
                     <a
-                        href="#"
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationText)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="inline-flex items-center justify-center bg-white text-[#088E48] font-bold text-[12px] px-4 py-2 rounded-[6px] hover:bg-gray-50 transition-colors w-full mt-1"
                     >
                         View on map &nbsp;↗

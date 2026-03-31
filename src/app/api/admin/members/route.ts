@@ -5,22 +5,7 @@ import path from "path";
 
 export async function GET() {
     try {
-        const safe = allMembers.map((m) => ({
-            id: m.id,
-            name: m.name,
-            location: m.location,
-            province: m.province,
-            designation: m.designation,
-            sectors: m.sectors,
-            description: m.description,
-            image: m.image,
-            period: m.period,
-            yearStart: m.yearStart,
-            type: m.type,
-            slug: m.slug,
-            socials: m.socials,
-            achievements: m.achievements ?? [],
-        }));
+        const safe = allMembers.map((m) => ({ ...m }));
         return NextResponse.json(safe);
     } catch {
         return NextResponse.json([], { status: 200 });
@@ -86,6 +71,82 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true });
     } catch (err) {
         console.error("Members POST error:", err);
+        return NextResponse.json({ error: String(err) }, { status: 500 });
+    }
+}
+
+export async function PUT(request: NextRequest) {
+    try {
+        const m = await request.json();
+        const { id } = m;
+        if (!id) return NextResponse.json({ error: "No ID provided" }, { status: 400 });
+
+        const filePath = path.join(process.cwd(), "src", "data", "members.ts");
+        let content = await readFile(filePath, "utf-8");
+
+        const idStr = `id: ${id},`;
+        let idxOfId = content.indexOf(idStr);
+        if (idxOfId === -1) {
+            idxOfId = content.indexOf(`id: "${id}",`);
+        }
+
+        if (idxOfId === -1) {
+            return NextResponse.json({ error: "Member not found" }, { status: 404 });
+        }
+
+        const objStart = content.lastIndexOf("    {", idxOfId);
+        const objEnd = content.indexOf("    },", idxOfId) + 7;
+
+        if (objStart === -1 || objEnd <= objStart) {
+            return NextResponse.json({ error: "Could not parse member entry" }, { status: 500 });
+        }
+
+        const sectors = Array.isArray(m.sectors) ? m.sectors : [m.sectors];
+        const types = Array.isArray(m.type) ? m.type : [m.type];
+        const slug = m.slug || m.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+        const socials = m.socials || {};
+        const socialsStr =
+            Object.keys(socials).length > 0
+                ? `{ ${Object.entries(socials)
+                    .filter(([, v]) => v)
+                    .map(([k, v]) => `${k}: "${v}"`)
+                    .join(", ")} }`
+                : "{}";
+
+        const achievements = (m.achievements || []) as { title: string; description: string }[];
+        const achievementsStr =
+            achievements.length > 0
+                ? `[\n${achievements
+                    .map(
+                        (a) =>
+                            `            { title: "${(a.title || "").replace(/"/g, "'")}", description: "${(a.description || "").replace(/"/g, "'")}" },`
+                    )
+                    .join("\n")}\n        ]`
+                : "[]";
+
+        const entry = `    {
+        id: ${id},
+        name: "${(m.name || "").replace(/"/g, "'")}",
+        location: "${(m.location || "").replace(/"/g, "'")}",
+        province: "${(m.province || "").replace(/"/g, "'")}",
+        designation: [${(Array.isArray(m.designation) ? m.designation : [m.designation]).filter(Boolean).map((d: string) => `"${(d || "").replace(/"/g, "'")}"`).join(", ")}],
+        sectors: [${sectors.map((s: string) => `"${s.replace(/"/g, "'")}"`).join(", ")}],
+        description: "${(m.description || "").replace(/"/g, "'")}",
+        image: "${m.image || "/members/placeholder.jpg"}",
+        period: "${m.period || "2023 - present"}",
+        yearStart: "${m.yearStart || "2023"}",
+        type: [${types.map((t: string) => `"${t}"`).join(", ")}],
+        slug: "${slug}",
+        socials: ${socialsStr},
+        achievements: ${achievementsStr},
+    },`;
+
+        content = content.slice(0, objStart) + entry + "\n" + content.slice(objEnd);
+        await writeFile(filePath, content, "utf-8");
+
+        return NextResponse.json({ success: true });
+    } catch (err) {
+        console.error("Members PUT error:", err);
         return NextResponse.json({ error: String(err) }, { status: 500 });
     }
 }

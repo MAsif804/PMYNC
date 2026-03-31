@@ -26,6 +26,17 @@ export type Happening = {
     detailImages: string[];
     categories: string[];
     linkedMembers?: string[];
+    happeningType?: "Event" | "Blog" | "News";
+    eventMode?: "Onsite" | "Online";
+    venue?: string;
+    fullAddress?: string;
+    meetingLink?: string;
+    eventTime?: string;
+    email?: string;
+    phone?: string;
+    website?: string;
+    fullContent?: string;
+    datePublished?: string;
 };
 
 const defaultDetailImages = [

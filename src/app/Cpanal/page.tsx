@@ -3,12 +3,13 @@ import { MapPin, Plus } from "lucide-react";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
-type Tab = "dashboard" | "members" | "projects" | "events";
-type DrawerMode = "member" | "project" | "event" | null;
+type Tab = "dashboard" | "members" | "projects" | "events" | "stories";
+type DrawerMode = "member" | "project" | "event" | "story" | null;
 
 interface MemberData { id: number; name: string; location: string; province: string; designation: string[]; sectors: string[]; description: string; image: string; period: string; yearStart: string; type: string[]; slug: string; socials: { email?: string; linkedin?: string; phone?: string }; achievements: { title: string; description: string }[]; }
 interface ProjectData { slug: string; title: string; dateStart: string; dateEnd: string; thumbnail: string; shortDescription: string; beneficiaries: string; locations: string[]; objectives: string[]; impacts: string[]; categories: string[]; linkedHappenings?: string[]; linkedMembers?: string[]; detailImages?: string[]; }
 interface EventData { slug: string; title: string; dateStart: string; dateEnd: string; thumbnail: string; shortDescription: string; beneficiaries: string; badge: string; date: string; location: string; category: string; attendees: string; author: string; locations: string[]; objectives: string[]; impacts: string[]; categories: string[]; type?: string[]; detailImages?: string[]; happeningType: "Event" | "Blog" | "News"; eventMode: "Onsite" | "Online"; venue: string; fullAddress: string; meetingLink: string; eventTime: string; email: string; phone: string; website: string; linkedMembers: string[]; fullContent: string; datePublished: string; }
+interface StoryData { id: number; name: string; slug: string; location: string; province: string; description: string; thumbnail: string; skills: string[]; aboutstory: string; storydescription: string; storyimages: string; innvotion: string; detailimages: string[]; communitydescription: string; communityimages: string; }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const slugify = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -191,8 +192,13 @@ export default function CpanelPage() {
     const [members, setMembers] = useState<MemberData[]>([]);
     const [allProjects, setProjects] = useState<ProjectData[]>([]);
     const [events, setEvents] = useState<EventData[]>([]);
+    const [allStories, setStories] = useState<StoryData[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [editingStory, setEditingStory] = useState<StoryData | null>(null);
+    const [editingMember, setEditingMember] = useState<MemberData | null>(null);
+    const [editingProject, setEditingProject] = useState<ProjectData | null>(null);
+    const [editingEvent, setEditingEvent] = useState<EventData | null>(null);
     const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
     const [search, setSearch] = useState("");
     const [provinceFilter, setProvinceFilter] = useState("");
@@ -223,45 +229,93 @@ export default function CpanelPage() {
     // Event form
     const defEvent: EventData = { slug: "", title: "", dateStart: "", dateEnd: "", thumbnail: "", shortDescription: "", beneficiaries: "", badge: "", date: "", location: "", category: "", attendees: "", author: "", locations: ["Islamabad"], objectives: [""], impacts: [""], categories: ["projects"], type: ["All"], detailImages: [], happeningType: "Event", eventMode: "Onsite", venue: "", fullAddress: "", meetingLink: "", eventTime: "", email: "", phone: "", website: "", linkedMembers: [], fullContent: "", datePublished: "" };
     const [ef, setEf] = useState<EventData>(defEvent);
+    // Story form
+    const defStory: StoryData = { id: 0, name: "", slug: "", location: "", province: "", description: "", thumbnail: "", skills: [], aboutstory: "", storydescription: "", storyimages: "", innvotion: "", detailimages: [], communitydescription: "", communityimages: "" };
+    const [sf, setSf] = useState<StoryData>(defStory);
 
     const showToast = (type: "success" | "error", message: string) => setToast({ type, message });
 
     const fetchAll = useCallback(async () => {
         setLoading(true);
         try {
-            const [r1, r2, r3] = await Promise.all([fetch("/api/admin/members"), fetch("/api/admin/projects"), fetch("/api/admin/events")]);
+            const [r1, r2, r3, r4] = await Promise.all([fetch("/api/admin/members"), fetch("/api/admin/projects"), fetch("/api/admin/events"), fetch("/api/admin/stories")]);
             setMembers(await r1.json());
             setProjects(await r2.json());
             setEvents(await r3.json());
+            setStories(await r4.json());
         } catch { showToast("error", "Failed to load data"); }
         setLoading(false);
     }, []);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
 
-    const openDrawer = (mode: DrawerMode) => { setDrawer(mode); setMf(defMember); setPf(defProject); setEf(defEvent); };
+    const openDrawer = (mode: DrawerMode) => { setDrawer(mode); setMf(defMember); setPf(defProject); setEf(defEvent); setSf(defStory); setEditingStory(null); setEditingMember(null); setEditingProject(null); setEditingEvent(null); };
+    const openEditStory = (story: StoryData) => { setSf({ ...defStory, ...story, skills: story.skills || [], detailimages: story.detailimages || [] }); setEditingStory(story); setDrawer("story"); };
+    const openEditMember = (member: MemberData) => { setMf({ ...defMember, ...member, id: member.id.toString(), designation: member.designation || [], sectors: member.sectors || [], type: member.type || ["member"], achievements: member.achievements || [], socials: member.socials || {} }); setEditingMember(member); setDrawer("member"); };
+    const openEditProject = (project: ProjectData) => { setPf({ ...defProject, ...project, locations: project.locations?.length ? project.locations : [""], objectives: project.objectives?.length ? project.objectives : [""], impacts: project.impacts?.length ? project.impacts : [""], categories: project.categories || ["projects"], linkedHappenings: project.linkedHappenings || [], linkedMembers: project.linkedMembers || [], detailImages: project.detailImages || [] }); setEditingProject(project); setDrawer("project"); };
+    const openEditEvent = (event: EventData) => { const hType = (event.type || []).includes("blog") ? "Blog" : (event.type || []).includes("news") ? "News" : "Event"; setEf({ ...defEvent, ...event, happeningType: event.happeningType || hType as any, locations: event.locations?.length ? event.locations : [""], objectives: event.objectives?.length ? event.objectives : [""], impacts: event.impacts?.length ? event.impacts : [""], categories: event.categories || ["projects"], type: event.type || ["All"], detailImages: event.detailImages || [], linkedMembers: event.linkedMembers || [] }); setEditingEvent(event); setDrawer("event"); };
     const closeDrawer = () => setDrawer(null);
 
     const saveMember = async () => {
         if (!mf.name.trim()) { showToast("error", "Name is required"); return; }
         setSaving(true);
+        const isEdit = !!editingMember;
         const payload = { ...mf, id: mf.id ? parseInt(mf.id) : Date.now(), slug: mf.slug || slugify(mf.name) };
-        const res = await fetch("/api/admin/members", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const res = await fetch("/api/admin/members", { method: isEdit ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
         const data = await res.json();
         setSaving(false);
-        if (data.success) { showToast("success", `Member "${mf.name}" added successfully!`); closeDrawer(); fetchAll(); }
+        if (data.success) { showToast("success", `Member "${mf.name}" ${isEdit ? "updated" : "added"} successfully!`); closeDrawer(); fetchAll(); }
         else showToast("error", data.error || "Failed to save member");
     };
 
     const saveProject = async () => {
         if (!pf.title.trim()) { showToast("error", "Title is required"); return; }
         setSaving(true);
+        const isEdit = !!editingProject;
         const payload = { ...pf, slug: pf.slug || slugify(pf.title) };
-        const res = await fetch("/api/admin/projects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const res = await fetch("/api/admin/projects", { method: isEdit ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
         const data = await res.json();
         setSaving(false);
-        if (data.success) { showToast("success", `Project "${pf.title}" added!`); closeDrawer(); fetchAll(); }
+        if (data.success) { showToast("success", `Project "${pf.title}" ${isEdit ? "updated" : "added"}!`); closeDrawer(); fetchAll(); }
         else showToast("error", data.error || "Failed to save project");
+    };
+
+    const deleteProject = async (slug: string) => {
+        if (!window.confirm("Delete this project?")) return;
+        setLoading(true);
+        try {
+            const res = await fetch("/api/admin/projects", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug }) });
+            const data = await res.json();
+            if (data.success) { showToast("success", "Project deleted"); fetchAll(); }
+            else { showToast("error", data.error || "Failed to delete project"); setLoading(false); }
+        } catch { showToast("error", "Error deleting project"); setLoading(false); }
+    };
+
+    const saveStory = async () => {
+        if (!sf.name.trim()) { showToast("error", "Name is required"); return; }
+        setSaving(true);
+        const isEdit = !!editingStory;
+        const payload = { ...sf, id: sf.id || Date.now(), slug: sf.slug || slugify(sf.name) };
+        const res = await fetch("/api/admin/stories", {
+            method: isEdit ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        setSaving(false);
+        if (data.success) { showToast("success", `Story "${sf.name}" ${isEdit ? "updated" : "added"}!`); closeDrawer(); fetchAll(); }
+        else showToast("error", data.error || "Failed to save story");
+    };
+
+    const deleteStory = async (id: number) => {
+        if (!window.confirm("Delete this story?")) return;
+        setLoading(true);
+        try {
+            const res = await fetch("/api/admin/stories", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+            const data = await res.json();
+            if (data.success) { showToast("success", "Story deleted"); fetchAll(); }
+            else { showToast("error", data.error || "Failed to delete story"); setLoading(false); }
+        } catch { showToast("error", "Error deleting story"); setLoading(false); }
     };
 
     const saveEvent = async () => {
@@ -276,13 +330,25 @@ export default function CpanelPage() {
             autoBadge = !isNaN(start.getTime()) && start > today ? "UpComing" : "";
         }
         // Set type array based on happeningType
+        const isEdit = !!editingEvent;
         const typeMap: Record<string, string[]> = { Event: ["events", "All"], Blog: ["blog", "All"], News: ["news", "All"] };
         const payload = { ...ef, slug: ef.slug || slugify(ef.title), badge: autoBadge, type: typeMap[ef.happeningType] || ["All"] };
-        const res = await fetch("/api/admin/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const res = await fetch("/api/admin/events", { method: isEdit ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
         const data = await res.json();
         setSaving(false);
-        if (data.success) { showToast("success", `${ef.happeningType} "${ef.title}" added!`); closeDrawer(); fetchAll(); }
+        if (data.success) { showToast("success", `${ef.happeningType} "${ef.title}" ${isEdit ? "updated" : "added"}!`); closeDrawer(); fetchAll(); }
         else showToast("error", data.error || "Failed to save happening");
+    };
+
+    const deleteEvent = async (slug: string) => {
+        if (!window.confirm("Delete this happening?")) return;
+        setLoading(true);
+        try {
+            const res = await fetch("/api/admin/events", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug }) });
+            const data = await res.json();
+            if (data.success) { showToast("success", "Happening deleted"); fetchAll(); }
+            else { showToast("error", data.error || "Failed to delete happening"); setLoading(false); }
+        } catch { showToast("error", "Error deleting happening"); setLoading(false); }
     };
 
     const deleteMember = async (id: number) => {
@@ -310,7 +376,7 @@ export default function CpanelPage() {
 
     const provinces = ["Punjab", "Sindh", "Khyber Pakhtunkhwa", "Balochistan", "Islamabad", "AJK", "Gilgit-Baltistan"];
     const categories = ["Technology", "Education", "Health", "Policy Development", "Youth Leadership", "Global Policy", "Entrepreneurship", "Civic Engagement"];
-    const labels: Record<Tab, string> = { dashboard: "Dashboard", members: "Members", projects: "Projects", events: "Events" };
+    const labels: Record<Tab, string> = { dashboard: "Dashboard", members: "Members", projects: "Projects", events: "Events", stories: "Stories" };
 
     const allSectors = Array.from(new Set(members.flatMap(m => m.sectors))).sort();
 
@@ -346,6 +412,7 @@ export default function CpanelPage() {
         { id: "members", label: "Members", icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
         { id: "projects", label: "Projects", icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg> },
         { id: "events", label: "Happenings", icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> },
+        { id: "stories", label: "Stories", icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg> },
     ];
 
     if (!mounted) return null;
@@ -388,6 +455,7 @@ export default function CpanelPage() {
                         {tab === "members" && <button onClick={() => openDrawer("member")} className="flex items-center gap-2 px-4 py-2 bg-[#088E48] hover:bg-[#06703a] text-white text-sm font-semibold rounded-xl transition-all shadow-sm shadow-[#088E48]/30"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>Add Member</button>}
                         {tab === "projects" && <button onClick={() => openDrawer("project")} className="flex items-center gap-2 px-4 py-2 bg-[#088E48] hover:bg-[#06703a] text-white text-sm font-semibold rounded-xl transition-all shadow-sm shadow-[#088E48]/30"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>Add Project</button>}
                         {tab === "events" && <button onClick={() => openDrawer("event")} className="flex items-center gap-2 px-4 py-2 bg-[#088E48] hover:bg-[#06703a] text-white text-sm font-semibold rounded-xl transition-all shadow-sm shadow-[#088E48]/30"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>Add Event</button>}
+                        {tab === "stories" && <button onClick={() => openDrawer("story")} className="flex items-center gap-2 px-4 py-2 bg-[#088E48] hover:bg-[#06703a] text-white text-sm font-semibold rounded-xl transition-all shadow-sm shadow-[#088E48]/30"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>Add Story</button>}
                     </div>
                 </header>
 
@@ -399,15 +467,16 @@ export default function CpanelPage() {
                             {/* DASHBOARD */}
                             {tab === "dashboard" && (
                                 <div className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                                         <StatCard label="Total Members" count={members.length} sub="Council Members" color="bg-emerald-50" icon={<svg className="w-6 h-6 text-[#088E48]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>} />
                                         <StatCard label="Total Projects" count={allProjects.length} sub="Active Programs" color="bg-blue-50" icon={<svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>} />
                                         <StatCard label="Total Events" count={events.length} sub="Happenings" color="bg-purple-50" icon={<svg className="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} />
+                                        <StatCard label="Total Stories" count={allStories.length} sub="Project Updates" color="bg-amber-50" icon={<svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>} />
                                     </div>
                                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                                         <h3 className="font-bold text-gray-800 mb-4">Quick Actions</h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            {[{ label: "Add Member", tab: "members" as Tab, drawer: "member" as DrawerMode, color: "bg-emerald-500 hover:bg-emerald-600" }, { label: "Add Project", tab: "projects" as Tab, drawer: "project" as DrawerMode, color: "bg-blue-500 hover:bg-blue-600" }, { label: "Add Event", tab: "events" as Tab, drawer: "event" as DrawerMode, color: "bg-purple-500 hover:bg-purple-600" }].map((a) => (
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                            {[{ label: "Add Member", tab: "members" as Tab, drawer: "member" as DrawerMode, color: "bg-emerald-500 hover:bg-emerald-600" }, { label: "Add Project", tab: "projects" as Tab, drawer: "project" as DrawerMode, color: "bg-blue-500 hover:bg-blue-600" }, { label: "Add Event", tab: "events" as Tab, drawer: "event" as DrawerMode, color: "bg-purple-500 hover:bg-purple-600" }, { label: "Add Story", tab: "stories" as Tab, drawer: "story" as DrawerMode, color: "bg-amber-500 hover:bg-amber-600" }].map((a) => (
                                                 <button key={a.label} onClick={() => { setTab(a.tab); openDrawer(a.drawer); }} className={`${a.color} text-white font-semibold rounded-xl py-3 px-5 transition-all text-sm`}>{a.label}</button>
                                             ))}
                                         </div>
@@ -496,13 +565,20 @@ export default function CpanelPage() {
                                                         <td className="px-5 py-3 text-gray-600">{m.province}</td>
                                                         <td className="px-5 py-3"><div className="flex flex-wrap gap-1">{m.sectors.slice(0, 2).map((s) => <span key={s} className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">{s}</span>)}</div></td>
                                                         <td className="px-5 py-3"><span className="text-xs px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full font-medium">{m.type[0]}</span></td>
-                                                        <td className="px-5 py-3 text-right">
+                                                        <td className="flex items-center justify-center px-5 py-3 text-right">
                                                             <button 
                                                                 onClick={() => deleteMember(m.id)}
                                                                 className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
                                                                 title="Delete Member"
                                                             >
                                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                            </button>
+                                                            <button
+                                                                onClick={() => openEditMember(m)}
+                                                                className="opacity-0 group-hover:opacity-100 p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                                                title="Edit Member"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                                             </button>
                                                         </td>
                                                     </tr>
@@ -582,10 +658,14 @@ export default function CpanelPage() {
                                                         {p.dateStart} – {p.dateEnd}
                                                     </p>
                                                     <p className="text-xs text-gray-500 mt-2 line-clamp-2">{p.shortDescription}</p>
-                                                    <div className="flex items-center gap-2 mt-3">
+                                                    <div className="flex items-center gap-2 mt-3 mb-3">
                                                         <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full">
                                                             {p.beneficiaries} beneficiaries
                                                         </span>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => openEditProject(p)} className="flex-1 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">Edit</button>
+                                                        <button onClick={() => deleteProject(p.slug)} className="flex-1 py-1.5 rounded-lg border border-red-100 text-xs font-medium text-red-500 hover:bg-red-50 transition-colors">Delete</button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -666,10 +746,14 @@ export default function CpanelPage() {
                                                     <p className="font-bold text-gray-800 text-sm leading-snug mt-2 line-clamp-2">{e.title}</p>
                                                     <p className="text-xs text-gray-400 mt-1">{e.category} · {e.dateStart}</p>
                                                     {e.location &&
-                                                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                                                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-1 mb-3">
                                                             <MapPin className="w-4 h-4 text-gray-400" />
                                                             {e.location}
                                                         </div>}
+                                                    <div className="flex gap-2 mt-3">
+                                                        <button onClick={() => openEditEvent(e)} className="flex-1 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">Edit</button>
+                                                        <button onClick={() => deleteEvent(e.slug)} className="flex-1 py-1.5 rounded-lg border border-red-100 text-xs font-medium text-red-500 hover:bg-red-50 transition-colors">Delete</button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
@@ -678,6 +762,56 @@ export default function CpanelPage() {
                                                 <Plus className="w-6 h-6 text-gray-400 group-hover:text-[#088E48]" />
                                             </div>
                                             <p className="text-sm font-medium text-gray-400 group-hover:text-[#088E48]">Add New Happening</p>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* STORIES */}
+                            {tab === "stories" && (
+                                <div className="space-y-5">
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <div className="relative flex-1 min-w-[200px] max-w-xs">
+                                            <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                            <input id="story-search" className="pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] w-full" placeholder="Search stories..." onChange={(e) => { const q = e.target.value.toLowerCase(); (document.getElementById("story-grid") as HTMLElement | null)?.querySelectorAll<HTMLElement>("[data-story]").forEach(el => { el.style.display = el.dataset.story?.toLowerCase().includes(q) ? "" : "none"; }); }} />
+                                        </div>
+                                        <select
+                                            className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] transition-all"
+                                            onChange={(e) => { const p = e.target.value; (document.getElementById("story-grid") as HTMLElement | null)?.querySelectorAll<HTMLElement>("[data-province]").forEach(el => { el.style.display = !p || el.dataset.province === p ? "" : "none"; }); }}
+                                        >
+                                            <option value="">All Provinces</option>
+                                            {["Punjab","Sindh","Khyber Pakhtunkhwa","Balochistan","Islamabad","AJK","Gilgit-Baltistan"].map(p => <option key={p} value={p}>{p}</option>)}
+                                        </select>
+                                        <p className="text-sm text-gray-500 ml-auto shrink-0">{allStories.length} stories</p>
+                                    </div>
+                                    <div id="story-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                                        {allStories.map((s) => (
+                                            <div key={s.id} data-story={s.name} data-province={s.province} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
+                                                {s.thumbnail ? (
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    <img src={s.thumbnail} alt={s.name} className="w-full h-44 object-cover bg-gray-100" onError={(e2) => { (e2.target as HTMLImageElement).style.display = "none"; }} />
+                                                ) : (
+                                                    <div className="w-full h-44 bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center">
+                                                        <svg className="w-10 h-10 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                                                    </div>
+                                                )}
+                                                <div className="p-4">
+                                                    {s.location && <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full font-medium">{s.location}{s.province ? `, ${s.province}` : ""}</span>}
+                                                    <p className="font-bold text-gray-800 text-sm leading-snug mt-2 line-clamp-2">{s.name}</p>
+                                                    <p className="text-xs text-gray-400 mt-1 line-clamp-2">{s.description}</p>
+                                                    {(s.skills || []).length > 0 && <div className="flex flex-wrap gap-1 mt-2">{(s.skills || []).slice(0, 3).map(t => <span key={t} className="text-xs px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded-full">{t}</span>)}</div>}
+                                                    <div className="flex gap-2 mt-3">
+                                                        <button onClick={() => openEditStory(s)} className="flex-1 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">Edit</button>
+                                                        <button onClick={() => deleteStory(s.id)} className="flex-1 py-1.5 rounded-lg border border-red-100 text-xs font-medium text-red-500 hover:bg-red-50 transition-colors">Delete</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <button onClick={() => openDrawer("story")} className="bg-white rounded-2xl border-2 border-dashed border-gray-200 hover:border-[#088E48] h-52 flex flex-col items-center justify-center gap-3 transition-all group">
+                                            <div className="w-12 h-12 rounded-xl bg-gray-100 group-hover:bg-[#088E48]/10 flex items-center justify-center transition-colors">
+                                                <Plus className="w-6 h-6 text-gray-400 group-hover:text-[#088E48]" />
+                                            </div>
+                                            <p className="text-sm font-medium text-gray-400 group-hover:text-[#088E48]">Add New Story</p>
                                         </button>
                                     </div>
                                 </div>
@@ -695,7 +829,9 @@ export default function CpanelPage() {
                         {/* Drawer Header */}
                         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
                             <div>
-                                <h2 className="text-lg font-bold text-gray-900">{drawer === "member" ? "Add New Member" : drawer === "project" ? "Add New Project" : "Add New Happening"}</h2>
+                                <h2 className="text-lg font-bold text-gray-900">
+                                    {drawer === "member" ? (editingMember ? "Edit Member" : "Add New Member") : drawer === "project" ? (editingProject ? "Edit Project" : "Add New Project") : drawer === "story" ? (editingStory ? "Edit Story" : "Add New Story") : (editingEvent ? "Edit Happening" : "Add New Happening")}
+                                </h2>
                                 <p className="text-xs text-gray-400 mt-0.5">Fill in the details and click Save</p>
                             </div>
                             <button onClick={closeDrawer} className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors">
@@ -1088,19 +1224,97 @@ export default function CpanelPage() {
                                     )}
                                 </>
                             )}
+
+                            {/* STORY FORM */}
+                            {drawer === "story" && (
+                                <>
+                                    <ImageUpload folder="nyc-stories" onUploaded={(url) => setSf((f) => ({ ...f, thumbnail: url }))} currentUrl={sf.thumbnail} />
+                                    <div>
+                                        <label className="text-xs font-medium text-gray-600 mb-1 block">Story Title * <span className="text-gray-400 font-normal">(name)</span></label>
+                                        <input className={ic} placeholder="e.g. Kashaf Akhtar" value={sf.name} onChange={(e) => setSf((f) => ({ ...f, name: e.target.value, slug: slugify(e.target.value) }))} />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-xs font-medium text-gray-600 mb-1 block">Location</label>
+                                            <input className={ic} placeholder="e.g. Islamabad" value={sf.location} onChange={(e) => setSf((f) => ({ ...f, location: e.target.value }))} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-medium text-gray-600 mb-1 block">Province</label>
+                                            <select className={sel} value={sf.province} onChange={(e) => setSf((f) => ({ ...f, province: e.target.value }))}>
+                                                <option value="">Select…</option>
+                                                {["Punjab","Sindh","Khyber Pakhtunkhwa","Balochistan","Islamabad","AJK","Gilgit-Baltistan"].map(p => <option key={p} value={p}>{p}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-gray-600 mb-1 block">Description</label>
+                                        <textarea className={ta} rows={3} placeholder="Brief description of the person / story…" value={sf.description} onChange={(e) => setSf((f) => ({ ...f, description: e.target.value }))} />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-gray-600 mb-1 block">Skills <span className="text-gray-400 font-normal">(comma-separated)</span></label>
+                                        <input className={ic} placeholder="e.g. Digital Skills, Freelancing" value={(sf.skills || []).join(", ")} onChange={(e) => setSf((f) => ({ ...f, skills: e.target.value.split(",").map(t => t.trim()).filter(Boolean) }))} />
+                                    </div>
+
+                                    <div className="border-t border-dashed border-gray-200 pt-3">
+                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Story Section</p>
+                                        <div className="space-y-3">
+                                            <div>
+                                                <label className="text-xs font-medium text-gray-600 mb-1 block">About Story <span className="text-gray-400 font-normal">(section heading)</span></label>
+                                                <input className={ic} placeholder="e.g. Transforming Waste into Walls…" value={sf.aboutstory} onChange={(e) => setSf((f) => ({ ...f, aboutstory: e.target.value }))} />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-medium text-gray-600 mb-1 block">Story Description</label>
+                                                <textarea className={ta} rows={4} placeholder="Full story description…" value={sf.storydescription} onChange={(e) => setSf((f) => ({ ...f, storydescription: e.target.value }))} />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-medium text-gray-600 mb-1 block">Story Image URL</label>
+                                                <input className={ic} placeholder="/nyc-stories/image.png" value={sf.storyimages} onChange={(e) => setSf((f) => ({ ...f, storyimages: e.target.value }))} />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="border-t border-dashed border-gray-200 pt-3">
+                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Innovation Section</p>
+                                        <div>
+                                            <label className="text-xs font-medium text-gray-600 mb-1 block">Full Content <span className="text-gray-400 font-normal">(innvotion)</span></label>
+                                            <textarea className={ta} rows={6} placeholder="Share the full story of what was accomplished…" value={sf.innvotion} onChange={(e) => setSf((f) => ({ ...f, innvotion: e.target.value }))} />
+                                        </div>
+                                    </div>
+
+                                    <div className="border-t border-dashed border-gray-200 pt-3">
+                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Community Section</p>
+                                        <div className="space-y-3">
+                                            <div>
+                                                <label className="text-xs font-medium text-gray-600 mb-1 block">Community Description</label>
+                                                <textarea className={ta} rows={3} placeholder="Community impact…" value={sf.communitydescription} onChange={(e) => setSf((f) => ({ ...f, communitydescription: e.target.value }))} />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-medium text-gray-600 mb-1 block">Community Image URL</label>
+                                                <input className={ic} placeholder="/nyc-stories/community.png" value={sf.communityimages} onChange={(e) => setSf((f) => ({ ...f, communityimages: e.target.value }))} />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs font-medium text-gray-600 mb-1 block">Slug (auto)</label>
+                                        <input className={ic + " bg-gray-50"} value={sf.slug} onChange={(e) => setSf((f) => ({ ...f, slug: e.target.value }))} />
+                                    </div>
+                                    <MultiImageUpload folder="nyc-stories" urls={sf.detailimages || []} onChange={(urls) => setSf(f => ({ ...f, detailimages: urls }))} />
+                                </>
+                            )}
                         </div>
 
                         {/* Drawer Footer */}
                         <div className="px-6 py-4 border-t border-gray-100 flex gap-3 bg-white">
                             <button onClick={closeDrawer} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all">Cancel</button>
                             <button
-                                onClick={drawer === "member" ? saveMember : drawer === "project" ? saveProject : saveEvent}
+                                onClick={drawer === "member" ? saveMember : drawer === "project" ? saveProject : drawer === "story" ? saveStory : saveEvent}
                                 disabled={saving}
                                 className="flex-1 py-2.5 rounded-xl bg-[#088E48] hover:bg-[#06703a] text-white text-sm font-bold transition-all shadow-sm shadow-[#088E48]/30 disabled:opacity-60 flex items-center justify-center gap-2"
                             >
                                 {saving ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Saving...</> : <>
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                    Save {drawer === "member" ? "Member" : drawer === "project" ? "Project" : "Happening"}
+                                    {drawer === "member" ? (editingMember ? "Update Member" : "Save Member") : drawer === "project" ? "Save Project" : drawer === "story" ? (editingStory ? "Update Story" : "Save Story") : "Save Happening"}
                                 </>}
                             </button>
                         </div>

@@ -240,6 +240,25 @@ export const allMembers: Member[] = [
         achievements: [],
     },
 
+    {
+        id: 1774589058098,
+        name: "Mian Muhammad Shehbaz Sharif",
+        location: "Lahore",
+        province: "Punjab",
+        designation: ["Prime Minister"],
+        sectors: ["Digital Skills", "Education", "Youth Engagement", "Youth Leadership"],
+        description: "Mian Muhammad Shehbaz Sharif[a] (born 23 September 1951) is a Pakistani politician and businessman who has served as the prime minister of Pakistan since March 2024, having previously been in the role between April 2022 to August 2023. He has also served as the president of the Pakistan Muslim League (N) and chief minister of Punjab three times, making him the longest-serving person in the role.",
+        image: "/members/1774588900925.jpg",
+        period: "2023 - present",
+        yearStart: "2023",
+        type: ["leadership"],
+        slug: "mian-muhammad-shehbaz-sharif",
+        socials: { email: "sh@gmail.com", linkedin: "https://www.linkedin.com/company/pmln/?originalSubdomain=pk" },
+        achievements: [
+            { title: "Sharif was elected to the Punjab Assembly in 1988 and to the National Assembly of Pakistan in 1990. ", description: " He was re-elected to the Punjab Assembly in 1993 and appointed leader of the opposition. He was elected as chief minister of Pakistan's most populous province, Punjab, for the first time on 20 February 1997. After the 1999 Pakistani coup d'état, Sharif, along with his family, spent years of self-exile in Saudi Arabia, returning to Pakistan in 2007. Sharif was appointed chief minister for a second term after the PML(N)'s victory in Punjab in the 2008 Pakistani general election" },
+            { title: "Sharif was nominated as the president of the PML(N) after his brother, Nawaz Sharif, was disqualified from holding office in the wake of the Panama Papers case.[3]", description: "He was elected as chief minister of Punjab for the third time after the 2013 Punjab provincial election and served his term until his party's defeat in the 2018 Punjab provincial election. " },
+        ],
+    },
 ];
 
 // ─── Helper ───────────────────────────────────────────────────────────────────

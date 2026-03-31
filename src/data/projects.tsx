@@ -248,6 +248,34 @@ export const projects: Project[] = [
         linkedHappenings: ["digital-skills-bootcamp", "youth-climate-action-summit", "the-2024-scholarship-winners"],
         linkedMembers: ["zaynab-ul-ghazali", "muhammad-nouman", "fakhar-jabran", "iqra-bisma"],
     },
+    {
+        slug: "pakistan-youth-parliament-collaborates-with-institute-of-environmental-studies-to-celebrate-world-environment-day-2024",
+        title: "Pakistan Youth Parliament Collaborates with Institute of Environmental Studies to Celebrate World Environment Day 2024",
+        dateStart: "Nov, 2025",
+        dateEnd: "Dec, 2025",
+        thumbnail: "/nyc-project/1774589227636.jpg",
+        shortDescription: "Karachi, June 5, 2024: Pakistan Youth Parliament partnered with the Institute of Environmental Studies, University of Karachi, to observe World Environment Day 2024. The event themed “Our land. Our future. We are #GenerationRestoration” aimed to raise awareness about environmental degradation and promote sustainable practices.Dr. Sidra Saeed – Member Sindh Cabinet PYP participated on behalf of President Pakistan Youth Parliament, Muhammad Abubakar. The event featured esteemed speakers, including: Prof. Dr. Khalid Mahmood Iraqi, Vice Chancellor, University of Karachi (Chief Guest) Dr. M. Farrakh Nawaz, Director, Institute of Environmental Studies Prof. Dr. Mussarat Jahan Yousaf, Dean, Faculty of Science Prof. Dr. Jamil Hasan Kazmi, Geologist Mr. Rafi ul Haq, Plant Ecologist",
+        beneficiaries: "2000+",
+        avatars: [],
+        images: ["/nyc-project/1774589378033.jpg", "/nyc-project/1774589401735.jpg", "/nyc-project/1774589427430.jpg"],
+        description: getDefaultDescription(),
+        fullDescription: defaultFullDescription,
+        objectives: [
+            "The seminar focused on environmental waste management, remote sensing, and mangrove rehabilitation. The speakers emphasized the need for collective action to address environmental challenges. ",
+            "The seminar focused on environmental waste management, remote sensing, and mangrove rehabilitation. The speakers emphasized the need for collective action to address environmental challenges. ",
+            "The seminar focused on environmental waste management, remote sensing, and mangrove rehabilitation. The speakers emphasized the need for collective action to address environmental challenges. "
+        ],
+        impacts: [
+            "The seminar focused on environmental waste management, remote sensing, and mangrove rehabilitation. The speakers emphasized the need for collective action to address environmental challenges. ",
+            "The seminar focused on environmental waste management, remote sensing, and mangrove rehabilitation. The speakers emphasized the need for collective action to address environmental challenges. ",
+            "The seminar focused on environmental waste management, remote sensing, and mangrove rehabilitation. The speakers emphasized the need for collective action to address environmental challenges. "
+        ],
+        locations: ["Islamabad", "Peshawar"],
+        detailImages: ["/nyc-project/1774589378033.jpg", "/nyc-project/1774589401735.jpg", "/nyc-project/1774589427430.jpg"],
+        categories: ["projects"],
+        linkedHappenings: ["youth-climate-action-summit", "the-2024-scholarship-winners"],
+        linkedMembers: ["zaynab-ul-ghazali", "sara-ahmed", "bilal-tanveer"],
+    },
 ];
 
 export function getProjectBySlug(slug: string): Project | undefined {

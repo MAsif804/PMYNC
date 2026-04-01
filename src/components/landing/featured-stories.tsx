@@ -95,7 +95,7 @@ export default function FeaturedStories() {
                                             {story.skills.join(" & ")}
                                         </p>
                                         <p className="text-gray-300 text-sm font-medium leading-relaxed ">
-                                            "{story.description}"
+                                            &quot;{story.description}&quot;
                                         </p>
                                     </div>
                                 </Link>

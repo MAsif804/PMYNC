@@ -172,7 +172,7 @@ export default function FeaturedStoryPage({ params }: { params: { slug: string }
                                             <p className="text-[#088E48] text-xs font-bold uppercase tracking-widest mb-3">
                                                 {other.skills.join(" & ")}
                                             </p>
-                                            <p className="text-gray-700 text-sm font-medium leading-relaxed line-clamp-4">"{other.description}"</p>
+                                            <p className="text-gray-700 text-sm font-medium leading-relaxed line-clamp-4">&quot;{other.description}&quot;</p>
                                         </div>
                                     </Link>
                                 </CarouselItem>

@@ -201,9 +201,13 @@ export default function CpanelPage() {
     const [editingEvent, setEditingEvent] = useState<EventData | null>(null);
     const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
     const [search, setSearch] = useState("");
-    const [provinceFilter, setProvinceFilter] = useState("");
+    const [provinceFilter, setProvinceFilter] = useState<string[]>([]);
+    const [isProvinceOpen, setIsProvinceOpen] = useState(false);
+    const [provinceSearch, setProvinceSearch] = useState("");
     const [sectorFilter, setSectorFilter] = useState<string[]>([]);
     const [isSectorOpen, setIsSectorOpen] = useState(false);
+    const [sectorSearch, setSectorSearch] = useState("");
+    const [typeFilter, setTypeFilter] = useState<string>("");
 
     const [projectSearch, setProjectSearch] = useState("");
     const [projectDateFilter, setProjectDateFilter] = useState("");
@@ -212,8 +216,11 @@ export default function CpanelPage() {
 
     const [isFormSectorOpen, setIsFormSectorOpen] = useState(false);
     const [isLinkedHappeningsOpen, setIsLinkedHappeningsOpen] = useState(false);
+    const [linkedHappeningsSearch, setLinkedHappeningsSearch] = useState("");
     const [isLinkedMembersOpen, setIsLinkedMembersOpen] = useState(false);
+    const [linkedMembersSearch, setLinkedMembersSearch] = useState("");
     const [isLinkedEventMembersOpen, setIsLinkedEventMembersOpen] = useState(false);
+    const [linkedEventMembersSearch, setLinkedEventMembersSearch] = useState("");
 
     const [eventSearch, setEventSearch] = useState("");
     const [eventDateFilter, setEventDateFilter] = useState("");
@@ -379,12 +386,14 @@ export default function CpanelPage() {
     const labels: Record<Tab, string> = { dashboard: "Dashboard", members: "Members", projects: "Projects", events: "Events", stories: "Stories" };
 
     const allSectors = Array.from(new Set(members.flatMap(m => m.sectors))).sort();
+    const allTypes = Array.from(new Set(members.map(m => m.type?.[0] || ""))).filter(Boolean).sort();
 
     const filteredMembers = members.filter((m) => {
         const matchesSearch = m.name.toLowerCase().includes(search.toLowerCase()) || (m.designation || []).some(d => d.toLowerCase().includes(search.toLowerCase()));
-        const matchesProvince = provinceFilter === "" || m.province === provinceFilter;
+        const matchesProvince = provinceFilter.length === 0 || provinceFilter.includes(m.province);
         const matchesSector = sectorFilter.length === 0 || m.sectors.some(s => sectorFilter.includes(s));
-        return matchesSearch && matchesProvince && matchesSector;
+        const matchesType = typeFilter === "" || (m.type?.[0] || "").toLowerCase() === typeFilter.toLowerCase();
+        return matchesSearch && matchesProvince && matchesSector && matchesType;
     });
 
     const allProjectDates = Array.from(new Set(allProjects.map(p => p.dateStart).filter(Boolean))).sort();
@@ -505,14 +514,65 @@ export default function CpanelPage() {
                                             <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                             <input className="pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] w-full" placeholder="Search members..." value={search} onChange={(e) => setSearch(e.target.value)} />
                                         </div>
-                                        <select
-                                            className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] transition-all"
-                                            value={provinceFilter}
-                                            onChange={(e) => setProvinceFilter(e.target.value)}
-                                        >
-                                            <option value="">All Provinces</option>
-                                            {provinces.map((p) => <option key={p} value={p}>{p}</option>)}
-                                        </select>
+                                        <div className="relative z-30">
+                                            <button
+                                                onClick={() => setIsProvinceOpen(!isProvinceOpen)}
+                                                className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 flex items-center justify-between gap-2 hover:border-[#088E48] transition-all min-w-[150px]"
+                                            >
+                                                <span className="truncate max-w-[130px] text-left">
+                                                    {provinceFilter.length === 0 ? "All Provinces" : `${provinceFilter.length} selected`}
+                                                </span>
+                                                <svg className={`w-4 h-4 text-gray-400 transition-transform ${isProvinceOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            {isProvinceOpen && (
+                                                <>
+                                                    <div className="fixed inset-0 z-10" onClick={() => { setIsProvinceOpen(false); setProvinceSearch(""); }} />
+                                                    <div className="absolute left-0 top-full mt-2 w-64 bg-white border border-gray-100 rounded-xl shadow-lg z-20 flex flex-col overflow-hidden">
+                                                        <div className="flex justify-center items-center gap-1">
+                                                            <div className="p-2 border-b border-gray-100 bg-gray-50/50 flex-1">
+                                                                <input 
+                                                                    type="text" 
+                                                                    placeholder="Search provinces..."
+                                                                    className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] transition-all"
+                                                                    value={provinceSearch}
+                                                                    onChange={(e) => setProvinceSearch(e.target.value)}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                />
+                                                            </div>
+                                                            <label className="flex items-center gap-2 px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 transition-colors">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="w-4 h-4 text-[#088E48] rounded-sm border-gray-300 focus:ring-[#088E48]"
+                                                                    checked={provinces.length > 0 && provinceFilter.length === provinces.length}
+                                                                    onChange={(e) => {
+                                                                        if (e.target.checked) setProvinceFilter([...provinces]);
+                                                                        else setProvinceFilter([]);
+                                                                    }}
+                                                                />
+                                                                <span className="text-sm font-semibold text-gray-800">All</span>
+                                                            </label>
+                                                        </div>
+                                                        <div className="max-h-56 overflow-y-auto py-1">
+                                                            {provinces.filter(p => p.toLowerCase().includes(provinceSearch.toLowerCase())).map(p => (
+                                                                <label key={p} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer transition-colors">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        className="w-4 h-4 text-[#088E48] rounded-sm border-gray-300 focus:ring-[#088E48]"
+                                                                        checked={provinceFilter.includes(p)}
+                                                                        onChange={(e) => {
+                                                                            if (e.target.checked) setProvinceFilter([...provinceFilter, p]);
+                                                                            else setProvinceFilter(provinceFilter.filter(pf => pf !== p));
+                                                                        }}
+                                                                    />
+                                                                    <span className="text-sm text-gray-700">{p}</span>
+                                                                </label>
+                                                            ))}
+                                                            {provinces.filter(p => p.toLowerCase().includes(provinceSearch.toLowerCase())).length === 0 && <div className="px-4 py-3 text-sm text-center text-gray-400">No provinces found</div>}
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
 
                                         <div className="relative">
                                             <button
@@ -526,27 +586,62 @@ export default function CpanelPage() {
                                             </button>
                                             {isSectorOpen && (
                                                 <>
-                                                    <div className="fixed inset-0 z-10" onClick={() => setIsSectorOpen(false)} />
-                                                    <div className="absolute left-0 top-full mt-2 w-64 bg-white border border-gray-100 rounded-xl shadow-lg z-20 py-2 max-h-64 overflow-y-auto flex flex-col">
-                                                        {allSectors.map(s => (
-                                                            <label key={s} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    className="w-4 h-4 text-[#088E48] rounded-sm border-gray-300 focus:ring-[#088E48]"
-                                                                    checked={sectorFilter.includes(s)}
-                                                                    onChange={(e) => {
-                                                                        if (e.target.checked) setSectorFilter([...sectorFilter, s]);
-                                                                        else setSectorFilter(sectorFilter.filter(sf => sf !== s));
-                                                                    }}
-                                                                />
-                                                                <span className="text-sm text-gray-700">{s}</span>
-                                                            </label>
-                                                        ))}
-                                                        {allSectors.length === 0 && <div className="px-4 py-2 text-sm text-gray-400">No sectors found</div>}
+                                                    <div className="fixed inset-0 z-10" onClick={() => { setIsSectorOpen(false); setSectorSearch(""); }} />
+                                                    <div className="absolute left-0 top-full mt-2 w-64 bg-white border border-gray-100 rounded-xl shadow-lg z-20 flex flex-col overflow-hidden">
+                                                       <div className="flex justify-center items-center gap-1">
+                                                         <div className="p-2 border-b border-gray-100 bg-gray-50/50">
+                                                            <input 
+                                                                type="text" 
+                                                                placeholder="Search sectors..."
+                                                                className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] transition-all"
+                                                                value={sectorSearch}
+                                                                onChange={(e) => setSectorSearch(e.target.value)}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            />
+                                                        </div>
+                                                        <label className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 transition-colors">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="w-4 h-4 text-[#088E48] rounded-sm border-gray-300 focus:ring-[#088E48]"
+                                                                checked={allSectors.length > 0 && sectorFilter.length === allSectors.length}
+                                                                onChange={(e) => {
+                                                                    if (e.target.checked) setSectorFilter([...allSectors]);
+                                                                    else setSectorFilter([]);
+                                                                }}
+                                                            />
+                                                            <span className="text-sm font-semibold text-gray-800">All</span>
+                                                        </label>
+                                                       </div>
+                                                        <div className="max-h-56 overflow-y-auto py-1">
+                                                            {allSectors.filter(s => s.toLowerCase().includes(sectorSearch.toLowerCase())).map(s => (
+                                                                <label key={s} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer transition-colors">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        className="w-4 h-4 text-[#088E48] rounded-sm border-gray-300 focus:ring-[#088E48]"
+                                                                        checked={sectorFilter.includes(s)}
+                                                                        onChange={(e) => {
+                                                                            if (e.target.checked) setSectorFilter([...sectorFilter, s]);
+                                                                            else setSectorFilter(sectorFilter.filter(sf => sf !== s));
+                                                                        }}
+                                                                    />
+                                                                    <span className="text-sm text-gray-700">{s}</span>
+                                                                </label>
+                                                            ))}
+                                                            {allSectors.filter(s => s.toLowerCase().includes(sectorSearch.toLowerCase())).length === 0 && <div className="px-4 py-3 text-sm text-center text-gray-400">No sectors found</div>}
+                                                        </div>
                                                     </div>
                                                 </>
                                             )}
                                         </div>
+
+                                        <select
+                                            className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] transition-all"
+                                            value={typeFilter}
+                                            onChange={(e) => setTypeFilter(e.target.value)}
+                                        >
+                                            <option value="">All Types</option>
+                                            {allTypes.map((t) => <option key={t} value={t} className="capitalize">{t}</option>)}
+                                        </select>
 
                                         <p className="text-sm text-gray-500 shrink-0">{filteredMembers.length} members</p>
                                     </div>
@@ -566,7 +661,7 @@ export default function CpanelPage() {
                                                         <td className="px-5 py-3"><div className="flex flex-wrap gap-1">{m.sectors.slice(0, 2).map((s) => <span key={s} className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">{s}</span>)}</div></td>
                                                         <td className="px-5 py-3"><span className="text-xs px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full font-medium">{m.type[0]}</span></td>
                                                         <td className="flex items-center justify-center px-5 py-3 text-right">
-                                                            <button 
+                                                            <button
                                                                 onClick={() => deleteMember(m.id)}
                                                                 className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
                                                                 title="Delete Member"
@@ -780,7 +875,7 @@ export default function CpanelPage() {
                                             onChange={(e) => { const p = e.target.value; (document.getElementById("story-grid") as HTMLElement | null)?.querySelectorAll<HTMLElement>("[data-province]").forEach(el => { el.style.display = !p || el.dataset.province === p ? "" : "none"; }); }}
                                         >
                                             <option value="">All Provinces</option>
-                                            {["Punjab","Sindh","Khyber Pakhtunkhwa","Balochistan","Islamabad","AJK","Gilgit-Baltistan"].map(p => <option key={p} value={p}>{p}</option>)}
+                                            {["Punjab", "Sindh", "Khyber Pakhtunkhwa", "Balochistan", "Islamabad", "AJK", "Gilgit-Baltistan"].map(p => <option key={p} value={p}>{p}</option>)}
                                         </select>
                                         <p className="text-sm text-gray-500 ml-auto shrink-0">{allStories.length} stories</p>
                                     </div>
@@ -962,23 +1057,35 @@ export default function CpanelPage() {
                                         )}
                                         {isLinkedHappeningsOpen && (
                                             <>
-                                                <div className="fixed inset-0 z-[50]" onClick={() => setIsLinkedHappeningsOpen(false)} />
-                                                <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg z-[60] py-2 max-h-52 overflow-y-auto">
-                                                    {events.length === 0 && <div className="px-4 py-2 text-sm text-gray-400">No happenings found</div>}
-                                                    {events.map(ev => (
-                                                        <label key={ev.slug} className="flex items-start gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="w-4 h-4 mt-0.5 text-[#088E48] rounded-sm border-gray-300 focus:ring-[#088E48] shrink-0"
-                                                                checked={(pf.linkedHappenings || []).includes(ev.slug)}
-                                                                onChange={e => {
-                                                                    if (e.target.checked) setPf(f => ({ ...f, linkedHappenings: [...(f.linkedHappenings || []), ev.slug] }));
-                                                                    else setPf(f => ({ ...f, linkedHappenings: (f.linkedHappenings || []).filter(s => s !== ev.slug) }));
-                                                                }}
-                                                            />
-                                                            <span className="text-sm text-gray-700 leading-snug">{ev.title}</span>
-                                                        </label>
-                                                    ))}
+                                                <div className="fixed inset-0 z-[50]" onClick={() => { setIsLinkedHappeningsOpen(false); setLinkedHappeningsSearch(""); }} />
+                                                <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg z-[60] flex flex-col overflow-hidden">
+                                                    <div className="p-2 border-b border-gray-100 bg-gray-50/50">
+                                                        <input 
+                                                            type="text" 
+                                                            placeholder="Search happenings..."
+                                                            className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] transition-all"
+                                                            value={linkedHappeningsSearch}
+                                                            onChange={(e) => setLinkedHappeningsSearch(e.target.value)}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        />
+                                                    </div>
+                                                    <div className="max-h-52 overflow-y-auto py-1">
+                                                        {events.filter(ev => ev.title.toLowerCase().includes(linkedHappeningsSearch.toLowerCase())).length === 0 && <div className="px-4 py-3 text-sm text-center text-gray-400">No happenings found</div>}
+                                                        {events.filter(ev => ev.title.toLowerCase().includes(linkedHappeningsSearch.toLowerCase())).map(ev => (
+                                                            <label key={ev.slug} className="flex items-start gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer transition-colors">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="w-4 h-4 mt-0.5 text-[#088E48] rounded-sm border-gray-300 focus:ring-[#088E48] shrink-0"
+                                                                    checked={(pf.linkedHappenings || []).includes(ev.slug)}
+                                                                    onChange={e => {
+                                                                        if (e.target.checked) setPf(f => ({ ...f, linkedHappenings: [...(f.linkedHappenings || []), ev.slug] }));
+                                                                        else setPf(f => ({ ...f, linkedHappenings: (f.linkedHappenings || []).filter(s => s !== ev.slug) }));
+                                                                    }}
+                                                                />
+                                                                <span className="text-sm text-gray-700 leading-snug">{ev.title}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             </>
                                         )}
@@ -1012,28 +1119,40 @@ export default function CpanelPage() {
                                         )}
                                         {isLinkedMembersOpen && (
                                             <>
-                                                <div className="fixed inset-0 z-[50]" onClick={() => setIsLinkedMembersOpen(false)} />
-                                                <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg z-[60] py-2 max-h-52 overflow-y-auto">
-                                                    {members.length === 0 && <div className="px-4 py-2 text-sm text-gray-400">No members found</div>}
-                                                    {members.map(m => (
-                                                        <label key={m.slug} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="w-4 h-4 text-[#088E48] rounded-sm border-gray-300 focus:ring-[#088E48] shrink-0"
-                                                                checked={(pf.linkedMembers || []).includes(m.slug)}
-                                                                onChange={e => {
-                                                                    if (e.target.checked) setPf(f => ({ ...f, linkedMembers: [...(f.linkedMembers || []), m.slug] }));
-                                                                    else setPf(f => ({ ...f, linkedMembers: (f.linkedMembers || []).filter(s => s !== m.slug) }));
-                                                                }}
-                                                            />
-                                                            <div className="flex items-center gap-2">
-                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                <img src={m.image} alt={m.name} className="w-6 h-6 rounded-full object-cover bg-gray-100" onError={e => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=088E48&color=fff`; }} />
-                                                                <span className="text-sm text-gray-700">{m.name}</span>
-                                                                <span className="text-xs text-gray-400">{(m.designation || []).join(", ")}</span>
-                                                            </div>
-                                                        </label>
-                                                    ))}
+                                                <div className="fixed inset-0 z-[50]" onClick={() => { setIsLinkedMembersOpen(false); setLinkedMembersSearch(""); }} />
+                                                <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg z-[60] flex flex-col overflow-hidden">
+                                                    <div className="p-2 border-b border-gray-100 bg-gray-50/50">
+                                                        <input 
+                                                            type="text" 
+                                                            placeholder="Search members..."
+                                                            className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] transition-all"
+                                                            value={linkedMembersSearch}
+                                                            onChange={(e) => setLinkedMembersSearch(e.target.value)}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        />
+                                                    </div>
+                                                    <div className="max-h-52 overflow-y-auto py-1">
+                                                        {members.filter(m => m.name.toLowerCase().includes(linkedMembersSearch.toLowerCase()) || (m.designation || []).some(d => d.toLowerCase().includes(linkedMembersSearch.toLowerCase()))).length === 0 && <div className="px-4 py-3 text-sm text-center text-gray-400">No members found</div>}
+                                                        {members.filter(m => m.name.toLowerCase().includes(linkedMembersSearch.toLowerCase()) || (m.designation || []).some(d => d.toLowerCase().includes(linkedMembersSearch.toLowerCase()))).map(m => (
+                                                            <label key={m.slug} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer transition-colors">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="w-4 h-4 text-[#088E48] rounded-sm border-gray-300 focus:ring-[#088E48] shrink-0"
+                                                                    checked={(pf.linkedMembers || []).includes(m.slug)}
+                                                                    onChange={e => {
+                                                                        if (e.target.checked) setPf(f => ({ ...f, linkedMembers: [...(f.linkedMembers || []), m.slug] }));
+                                                                        else setPf(f => ({ ...f, linkedMembers: (f.linkedMembers || []).filter(s => s !== m.slug) }));
+                                                                    }}
+                                                                />
+                                                                <div className="flex items-center gap-2">
+                                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                    <img src={m.image} alt={m.name} className="w-6 h-6 rounded-full object-cover bg-gray-100" onError={e => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=088E48&color=fff`; }} />
+                                                                    <span className="text-sm text-gray-700 leading-snug">{m.name}</span>
+                                                                    <span className="text-xs text-gray-400 mt-0.5">{(m.designation || []).join(", ")}</span>
+                                                                </div>
+                                                            </label>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             </>
                                         )}
@@ -1086,11 +1205,10 @@ export default function CpanelPage() {
                                                             key={mode}
                                                             type="button"
                                                             onClick={() => setEf((f) => ({ ...f, eventMode: mode }))}
-                                                            className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all ${
-                                                                ef.eventMode === mode
+                                                            className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all ${ef.eventMode === mode
                                                                     ? "bg-[#088E48] text-white border-[#088E48]"
                                                                     : "bg-white text-gray-600 border-gray-200 hover:border-[#088E48]"
-                                                            }`}
+                                                                }`}
                                                         >
                                                             {mode === "Onsite" ? "📍 Onsite" : "🔗 Online"}
                                                         </button>
@@ -1165,28 +1283,40 @@ export default function CpanelPage() {
                                                 )}
                                                 {isLinkedEventMembersOpen && (
                                                     <>
-                                                        <div className="fixed inset-0 z-[50]" onClick={() => setIsLinkedEventMembersOpen(false)} />
-                                                        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg z-[60] py-2 max-h-52 overflow-y-auto">
-                                                            {members.length === 0 && <div className="px-4 py-2 text-sm text-gray-400">No members found</div>}
-                                                            {members.map(m => (
-                                                                <label key={m.slug} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        className="w-4 h-4 text-[#088E48] rounded-sm border-gray-300 focus:ring-[#088E48] shrink-0"
-                                                                        checked={ef.linkedMembers.includes(m.slug)}
-                                                                        onChange={e => {
-                                                                            if (e.target.checked) setEf(f => ({ ...f, linkedMembers: [...f.linkedMembers, m.slug] }));
-                                                                            else setEf(f => ({ ...f, linkedMembers: f.linkedMembers.filter(s => s !== m.slug) }));
-                                                                        }}
-                                                                    />
-                                                                    <div className="flex items-center gap-2">
-                                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                        <img src={m.image} alt={m.name} className="w-6 h-6 rounded-full object-cover bg-gray-100" onError={e => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=088E48&color=fff`; }} />
-                                                                        <span className="text-sm text-gray-700">{m.name}</span>
-                                                                        <span className="text-xs text-gray-400">{(m.designation || []).join(", ")}</span>
-                                                                    </div>
-                                                                </label>
-                                                            ))}
+                                                        <div className="fixed inset-0 z-[50]" onClick={() => { setIsLinkedEventMembersOpen(false); setLinkedEventMembersSearch(""); }} />
+                                                        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg z-[60] flex flex-col overflow-hidden">
+                                                            <div className="p-2 border-b border-gray-100 bg-gray-50/50">
+                                                                <input 
+                                                                    type="text" 
+                                                                    placeholder="Search members..."
+                                                                    className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#088E48]/30 focus:border-[#088E48] transition-all"
+                                                                    value={linkedEventMembersSearch}
+                                                                    onChange={(e) => setLinkedEventMembersSearch(e.target.value)}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                />
+                                                            </div>
+                                                            <div className="max-h-52 overflow-y-auto py-1">
+                                                                {members.filter(m => m.name.toLowerCase().includes(linkedEventMembersSearch.toLowerCase()) || (m.designation || []).some(d => d.toLowerCase().includes(linkedEventMembersSearch.toLowerCase()))).length === 0 && <div className="px-4 py-3 text-sm text-center text-gray-400">No members found</div>}
+                                                                {members.filter(m => m.name.toLowerCase().includes(linkedEventMembersSearch.toLowerCase()) || (m.designation || []).some(d => d.toLowerCase().includes(linkedEventMembersSearch.toLowerCase()))).map(m => (
+                                                                    <label key={m.slug} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer transition-colors">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            className="w-4 h-4 text-[#088E48] rounded-sm border-gray-300 focus:ring-[#088E48] shrink-0"
+                                                                            checked={(ef.linkedMembers || []).includes(m.slug)}
+                                                                            onChange={e => {
+                                                                                if (e.target.checked) setEf(f => ({ ...f, linkedMembers: [...(ef.linkedMembers || []), m.slug] }));
+                                                                                else setEf(f => ({ ...f, linkedMembers: (ef.linkedMembers || []).filter(s => s !== m.slug) }));
+                                                                            }}
+                                                                        />
+                                                                        <div className="flex items-center gap-2">
+                                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                            <img src={m.image} alt={m.name} className="w-6 h-6 rounded-full object-cover bg-gray-100" onError={e => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=088E48&color=fff`; }} />
+                                                                            <span className="text-sm text-gray-700 leading-snug">{m.name}</span>
+                                                                            <span className="text-xs text-gray-400 mt-0.5">{(m.designation || []).join(", ")}</span>
+                                                                        </div>
+                                                                    </label>
+                                                                ))}
+                                                            </div>
                                                         </div>
                                                     </>
                                                 )}
@@ -1242,7 +1372,7 @@ export default function CpanelPage() {
                                             <label className="text-xs font-medium text-gray-600 mb-1 block">Province</label>
                                             <select className={sel} value={sf.province} onChange={(e) => setSf((f) => ({ ...f, province: e.target.value }))}>
                                                 <option value="">Select…</option>
-                                                {["Punjab","Sindh","Khyber Pakhtunkhwa","Balochistan","Islamabad","AJK","Gilgit-Baltistan"].map(p => <option key={p} value={p}>{p}</option>)}
+                                                {["Punjab", "Sindh", "Khyber Pakhtunkhwa", "Balochistan", "Islamabad", "AJK", "Gilgit-Baltistan"].map(p => <option key={p} value={p}>{p}</option>)}
                                             </select>
                                         </div>
                                     </div>
